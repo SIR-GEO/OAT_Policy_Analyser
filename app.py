@@ -92,7 +92,8 @@ if search_query:
         )
         
         if search_response.choices:
-            response_content = search_response.choices[0].message["content"]  # Access using key
+            # Assuming that the 'content' attribute exists within the 'message' object
+            response_content = search_response.choices[0].message.content  # Direct attribute access
             st.text_area("Search Results:", value=response_content, height=200, disabled=True)
         else:
             st.error("No response received from the model.")
