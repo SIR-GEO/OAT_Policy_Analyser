@@ -60,7 +60,7 @@ def get_all_file_contents_from_repo(repo_name):
 
 # Set up the Streamlit interface
 st.title('OAT Policy Analyser')
-st.markdown('## Upload your policy documents here:')
+st.markdown('Upload your policy documents here:')
 
 # Initialize metrics
 start_time = None
@@ -154,11 +154,12 @@ if search_query:
             # If this is a follow-up question, only include the conversation history
             messages = conversation_history
 
+        # Separate AI API call for handling user follow up questions, reduces massive user of tokens.
         search_response = client.chat.completions.create(
             model="gpt-4-1106-preview",
             temperature=0.5,
             stream = True,
-            messages=messages
+            messages= ["You must answer the query:" + search_query + "using the information provided in a previous question and answer:" + messages]
         )
 
         # Placeholder for streaming responses
