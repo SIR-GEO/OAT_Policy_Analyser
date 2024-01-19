@@ -27,7 +27,7 @@ embeddings = OpenAIEmbeddings(client='')
 
 # Set Pinecone index
 docsearch = Pinecone.from_existing_index(
-    index_name=PINECONE_INDEX_NAME, embedding=embeddings)
+    index_name='oat', embedding=embeddings)
 
 # Create chain
 chain = load_qa_chain(llm_chat)
