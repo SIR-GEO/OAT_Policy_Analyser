@@ -1,19 +1,19 @@
 # embedding_docs.py
 import os
-import tempfile
 from PyPDF2 import PdfReader
 from docx import Document
+import tempfile
+from langchain_community.document_loaders import UnstructuredPDFLoader
+from langchain_community.document_loaders.word_document import Docx2txtLoader
 
 def process_pdf(file_content):
     # Write the PDF content to a temporary file and then process it
-    with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf', mode='wb') as tmp_file:
         tmp_file.write(file_content)
         tmp_file.flush()
         try:
-            reader = PdfReader(tmp_file.name)
-            text = ""
-            for page in reader.pages:
-                text += page.extract_text() or ""
+            loader = UnstructuredPDFLoader(tmp_file.name)
+            text = loader.load()
             return text
         except Exception as e:
             print(f"An error occurred while processing PDF: {e}")
@@ -24,12 +24,12 @@ def process_pdf(file_content):
 
 def process_docx(file_content):
     # Write the DOCX content to a temporary file and then process it
-    with tempfile.NamedTemporaryFile(delete=False, suffix='.docx', mode='wb') as tmp_file:  # Add 'mode=wb' to open the file in binary mode
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.docx', mode='wb') as tmp_file:
         tmp_file.write(file_content)
         tmp_file.flush()
         try:
-            doc = Document(tmp_file.name)
-            text = "\n".join(para.text for para in doc.paragraphs)
+            loader = Docx2txtLoader(tmp_file.name)
+            text = loader.load()
             return text
         except Exception as e:
             print(f"An error occurred while processing DOCX: {e}")
@@ -37,7 +37,7 @@ def process_docx(file_content):
         finally:
             tmp_file.close()  # Ensure the file is closed before attempting to delete it
             os.remove(tmp_file.name)
-# The rest of the embedding_docs.py file remains unchanged
+
 
 def process_txt(document_path):
     # Implement TXT processing here

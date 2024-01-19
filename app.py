@@ -20,15 +20,26 @@ repo_name = "OAT_Policies"
 def upload_file_to_github(repo_name, file_path, file_content, commit_message):
     repo = g.get_user().get_repo(repo_name)
     try:
+        # Before calling repo.create_file or repo.update_file
+        if not isinstance(file_content, str):
+            file_content = str(file_content)
+
         contents = repo.get_contents(file_path)
+        # Log the type of file_content for debugging
+        logging.debug(f"Type of file_content: {type(file_content)}")
         repo.update_file(contents.path, commit_message, file_content, contents.sha)
-        st.success('File updated successfully!')
+        st.success(f'File "{file_path}" updated successfully!')
     except Exception as e:
+        logging.error(f"An error occurred: {e}")
         if getattr(e, 'status', None) == 404:  # File not found
+            # Ensure file_content is a string
+            if isinstance(file_content, bytes):
+                file_content = file_content.decode('utf-8')
+
             repo.create_file(file_path, commit_message, file_content)
             st.success(f'File "{file_path}" created successfully!')
         else:
-            st.error('An error occurred while uploading the file.')
+            st.error(f'An error occurred while uploading the file "{file_path}".')
             raise e
 
 def get_all_file_contents_from_repo(repo_name):
@@ -87,7 +98,8 @@ if search_query:
             temperature=0.5,
             stream = True,
             messages=[
-                {"role": "system", "content": """You are a professional analyst called OAT Docs Analyser assistant. 
+                {"role": "system", "content": """You are a UK based professional analyst called OAT Docs Analyser assistant.
+                You always respond using UK spelling and grammar. 
                  You must say if the information does not have enough detail, you must NOT make up facts or lie. 
                  At the end of any response, you must always source every single document source information you used in your response, 
                  each document source will be given in the format **Document Source: (insert content filename here)**. 
