@@ -34,12 +34,12 @@ def upload_file_to_github(repo_name, file_path, file_content, commit_message):
 def get_all_file_contents_from_repo(repo_name):
     repo = g.get_user().get_repo(repo_name)
     contents = repo.get_contents("")
-    all_file_contents = ""
+    all_file_contents = []
     for content_file in contents:
         if content_file.type == "file":
-            file_content = repo.get_contents(content_file.path).decoded_content.decode()
-            all_file_contents += file_content + "\n\n"
-    return all_file_contents
+            file_content = repo.get_contents(content_file.path).decoded_content.decode().strip()
+            all_file_contents.append(file_content)
+    return "\n".join(all_file_contents)
 
 # Set up the Streamlit interface
 st.title('OAT Policy Analyser')
