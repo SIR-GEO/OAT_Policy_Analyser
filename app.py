@@ -42,7 +42,7 @@ uploaded_files = st.file_uploader("Choose a file", type=['pdf', 'docx', 'txt'], 
 
 # Process each uploaded file
 if uploaded_files:
-    repo_name = "OAT_Policy_Analyser"  # Replace with your actual GitHub repository name
+    repo_name = "OAT_Policies"  
     with tempfile.TemporaryDirectory() as temp_dir:
         document_paths = []
         for uploaded_file in uploaded_files:
