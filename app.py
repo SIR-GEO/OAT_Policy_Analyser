@@ -21,27 +21,25 @@ repo_name = "OAT_Policies"
 def upload_file_to_github(repo_name, file_path, file_content, commit_message):
     repo = g.get_user().get_repo(repo_name)
     try:
-        # Before calling repo.create_file or repo.update_file
+        # Check if the file already exists
+        contents = repo.get_contents("")
+        existing_files = [content_file.name for content_file in contents if content_file.type == "file"]
+        
+        if file_path in existing_files:
+            st.warning(f'File "{file_path}" already exists. No action taken to avoid duplication.')
+            return  # Skip the upload to prevent duplication
+
+        # Convert file_content to string if necessary
         if not isinstance(file_content, str):
             file_content = str(file_content)
 
-        contents = repo.get_contents(file_path)
-        # Log the type of file_content for debugging
-        logging.debug(f"Type of file_content: {type(file_content)}")
-        repo.update_file(contents.path, commit_message, file_content, contents.sha)
-        st.success(f'File "{file_path}" updated successfully!')
+        # Since the file does not exist, create it
+        repo.create_file(file_path, commit_message, file_content)
+        st.success(f'File "{file_path}" created successfully!')
     except Exception as e:
         logging.error(f"An error occurred: {e}")
-        if getattr(e, 'status', None) == 404:  # File not found
-            # Ensure file_content is a string
-            if isinstance(file_content, bytes):
-                file_content = file_content.decode('utf-8')
-
-            repo.create_file(file_path, commit_message, file_content)
-            st.success(f'File "{file_path}" created successfully!')
-        else:
-            st.error(f'An error occurred while uploading the file "{file_path}".')
-            raise e
+        st.error(f'An error occurred while uploading the file "{file_path}".')
+        raise e
 
 def get_all_file_contents_from_repo(repo_name):
     repo = g.get_user().get_repo(repo_name)
@@ -68,6 +66,8 @@ footer_run_time = st.empty()
 start_time = None
 total_tokens = 0
 tokens_per_sec = 0  # Initialize tokens_per_sec here
+run_time = 0  # Initialize run_time here
+
 
 
 # Reserve space for the metrics at the bottom of the app
@@ -105,6 +105,9 @@ search_query = st.text_input('Enter your search query:')
 if search_query:
     # Fetch all file contents from the repo
     all_file_contents = get_all_file_contents_from_repo(repo_name)
+
+    # Start time when the search begins
+    start_time = time.time()
 
     try:
         search_response = client.chat.completions.create(
@@ -154,15 +157,7 @@ if search_query:
     except Exception as e:
         st.error(f"An error occurred: {e}")
 
-with footer_placeholder.container():
-    st.markdown("---")  # Optional: insert a horizontal line for visual separation
-    st.markdown(f"Tokens / sec: {tokens_per_sec:.2f}")
-    st.markdown(f"Tokens: {total_tokens}")
-    st.markdown(f"Run time: {run_time:.2f}")
-
-
 # Calculate the predicted cost
-# Assuming `total_tokens` is the number of tokens processed
 input_cost_per_token = 0.01 / 1000  # Cost per token for input
 output_cost_per_token = 0.03 / 1000  # Cost per token for output
 predicted_cost = (total_tokens * (input_cost_per_token + output_cost_per_token))
@@ -180,8 +175,7 @@ footer_html = f"""
     padding: 10px;
     z-index: 9999;
 ">
-    <span>Sec to first token: N/A</span>
-    <span style="margin-left: 30px;">Tokens / sec: {tokens_per_sec:.2f}</span>
+    <span>Tokens / sec: {tokens_per_sec:.2f}</span>
     <span style="margin-left: 30px;">Tokens: {total_tokens}</span>
     <span style="margin-left: 30px;">Run time: {run_time:.2f}</span>
     <span style="margin-left: 30px;">Predicted cost: ${predicted_cost:.2f}</span>
