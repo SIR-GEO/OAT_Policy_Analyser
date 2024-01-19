@@ -1,75 +1,60 @@
 # embedding_docs.py
+
 import os
-import streamlit as st
-import tempfile
-from langchain_community.document_loaders import UnstructuredPDFLoader, TextLoader
-from langchain_community.document_loaders.word_document import Docx2txtLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_openai import OpenAIEmbeddings
+from PyPDF2 import PdfReader
+from docx import Document
 
+def process_pdf(document_path):
+    # Implement PDF processing here
+    try:
+        reader = PdfReader(document_path)
+        text = ""
+        for page in reader.pages:
+            text += page.extract_text()
+        return text
+    except Exception as e:
+        print(f"An error occurred while processing PDF: {e}")
+        return None
 
-OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
+def process_docx(document_path):
+    # Implement DOCX processing here
+    try:
+        doc = Document(document_path)
+        text = ""
+        for para in doc.paragraphs:
+            text += para.text + '\n'
+        return text
+    except Exception as e:
+        print(f"An error occurred while processing DOCX: {e}")
+        return None
 
+def process_txt(document_path):
+    # Implement TXT processing here
+    try:
+        with open(document_path, 'r', encoding='utf-8') as file:
+            content = file.read()
+        return content
+    except Exception as e:
+        print(f"An error occurred while processing TXT: {e}")
+        return None
 
-# Ensure the Pinecone index exists
-def ensure_pinecone_index():
-    print('Checking if index exists...')
-    if PINECONE_INDEX_NAME not in pinecone.list_indexes():
-        print('Index does not exist, creating index...')
-        pinecone.create_index(
-            name=PINECONE_INDEX_NAME,
-            metric='cosine',
-            dimension=1536  # The OpenAI embedding model `text-embedding-ada-002` uses 1536 dimensions
-        )
-
-
-# embedding_docs.py
-# ... (other import statements and code)
-
-# Process a single document file
-def process_document(document_path, update_callback=None):
-    # Extract the filename from the document_path
-    document_name = os.path.basename(document_path)
-    
-    print(f'Loading document: {document_name}')
-    file_extension = os.path.splitext(document_path)[1].lower()
-    
-    # Determine the loader based on the file extension
-    if file_extension == '.pdf':
-        loader = UnstructuredPDFLoader(document_path)
-    elif file_extension == '.docx':
-        loader = Docx2txtLoader(document_path)
-    elif file_extension == '.txt':
-        loader = TextLoader(document_path)
+def process_document(document_path):
+    # Determine the type of document and call the appropriate processing function
+    _, file_extension = os.path.splitext(document_path)
+    if file_extension.lower() == '.pdf':
+        return process_pdf(document_path)
+    elif file_extension.lower() == '.docx':
+        return process_docx(document_path)
+    elif file_extension.lower() == '.txt':
+        return process_txt(document_path)
     else:
-        raise ValueError(f'Unsupported file type: {file_extension}')
-    
-    data = loader.load()
+        raise ValueError(f"Unsupported file type: {file_extension}")
 
-    # Assuming all loaders return data in a similar structure
-    if update_callback:
-        update_callback(f'Loaded document "{document_name}" with {len(data)} pages/sections')
-        update_callback(f'There are {len(data[0].page_content)} characters in the document "{document_name}"')
-
-    # Chunk data into smaller documents
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
-    texts = text_splitter.split_documents(data)
-    
-    if update_callback:
-        update_callback(f'You have split your document into {len(texts)} smaller documents')
-
-    # Create embeddings and index from your documents
-    print('Creating embeddings and index...')
-    embeddings = OpenAIEmbeddings(client='')
-    docsearch = Pinecone.from_texts(
-        [t.page_content for t in texts], embeddings, index_name=PINECONE_INDEX_NAME)
-
-    if update_callback:
-        update_callback(f'Document "{document_name}" has been processed and indexed!')
-
-# Process multiple document files
-def process_documents(document_paths, update_callback=None):
+def process_documents(document_paths):
+    # Process each document and return their contents
+    documents_content = {}
     for document_path in document_paths:
-        process_document(document_path, update_callback)  # Pass the callback function
-
-# ... (rest of your code)
+        content = process_document(document_path)
+        if content is not None:
+            documents_content[document_path] = content
+    return documents_content

@@ -7,4 +7,6 @@ langchain==0.1.1
 langchain-community==0.0.13
 langchain-core==0.1.12
 langchain-openai==0.0.2.post1
+PyPDF2==3.0.1
+python-docx==4.8.0
 docx2txt==0.8

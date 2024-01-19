@@ -1,1 +1,1 @@
-# Document Answering with Langchain, Pinecone and OpenAI
+# Document Answering with Langchain, github cloud storage and OpenAI
