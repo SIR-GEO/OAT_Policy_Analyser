@@ -16,11 +16,11 @@ pinecone.init(api_key=PINECONE_API_KEY, environment=PINECONE_API_ENVIRONMENT)
 
 # Setting streamlit
 st.title('OAT Policy Analyser')
-usr_input = st.text_input('Ask any question about these OAT Policies: https://www.ormistonacademiestrust.co.uk/who-we-are/docs-and-policies/policies/ And use this link to upload PDFs, WORD DOCS, TXT to the database: https://documents-to-database.streamlit.app/')
+usr_input = st.text_input('Ask any question about any OAT Policies. Use this link to upload PDFs, WORD DOCS, TXT to the database: https://documents-to-database.streamlit.app/')
 
 # Set OpenAI LLM and embeddings
 llm_chat = ChatOpenAI(temperature=0.9,
-                      model='gpt-3.5-turbo-16k', client='')
+                      model='gpt-4-1106-preview', client='')
 
 embeddings = OpenAIEmbeddings(client='')
 
@@ -30,6 +30,26 @@ docsearch = Pinecone.from_existing_index(
 
 # Create chain
 chain = load_qa_chain(llm_chat)
+
+# conversation_state.py
+class ConversationState:
+    def __init__(self):
+        self.history = []
+
+    def update(self, user_input, ai_response, documents):
+        self.history.append({
+            "user_input": user_input,
+            "ai_response": ai_response,
+            "documents": documents
+        })
+
+    def get_full_context(self):
+        # Implement logic to combine the conversation history into a single context string
+        # For simplicity, we concatenate user inputs and AI responses
+        context = ""
+        for entry in self.history:
+            context += f"User: {entry['user_input']} \nAI: {entry['ai_response']}\n"
+        return context
 
 # Check Streamlit input
 if usr_input:
