@@ -5,6 +5,8 @@ from embedding_docs import process_documents, process_pdf, process_docx, process
 import tempfile
 import os
 
+repo_name = "OAT_Policies"
+
 # Initialise GitHub client with your token
 g = Github(st.secrets["GITHUB_TOKEN"])
 OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
