@@ -2,6 +2,7 @@
 import streamlit as st
 from github import Github
 import openai
+import time
 import logging
 import os
 from embedding_docs import process_document
@@ -57,6 +58,17 @@ def get_all_file_contents_from_repo(repo_name):
 # Set up the Streamlit interface
 st.title('OAT Policy Analyser')
 st.markdown('## Upload your policy documents here:')
+
+# At the beginning of your Streamlit app, after initializing Streamlit
+footer_sec_to_first_token = st.empty()
+footer_tokens_per_sec = st.empty()
+footer_tokens = st.empty()
+footer_run_time = st.empty()
+
+# Initialize metrics
+start_time = None
+first_token_time = None
+total_tokens = 0
 
 # Streamlit file uploader
 uploaded_files = st.file_uploader("Upload Documents", type=['pdf', 'docx', 'txt'], accept_multiple_files=True)
@@ -114,13 +126,34 @@ if search_query:
                 # Initialize an empty string to hold the response
         full_response = ""
 
+        # Start time when the search begins
+        start_time = time.time()
+
+
         # Iterate over the stream and update the placeholder
         for chunk in search_response:
             if chunk.choices[0].delta.content is not None:
+                # Update the first token time if it's the first token
+                if first_token_time is None:
+                    first_token_time = time.time()
+                    sec_to_first_token = first_token_time - start_time
+                    footer_sec_to_first_token.markdown(f"Sec to first token: {sec_to_first_token:.2f}")
+
                 # Append new content to the full response
                 full_response += chunk.choices[0].delta.content
+
                 # Update the placeholder with the full response so far
                 response_placeholder.write(full_response)
+
+                # Calculate and update tokens and run time
+                total_tokens += len(chunk.choices[0].delta.content.split())
+                run_time = time.time() - start_time
+                tokens_per_sec = total_tokens / run_time if run_time > 0 else 0
+
+                # Update the footer with the metrics
+                footer_tokens_per_sec.markdown(f"Tokens / sec: {tokens_per_sec:.2f}")
+                footer_tokens.markdown(f"Tokens: {total_tokens}")
+                footer_run_time.markdown(f"Run time: {run_time:.2f}")
 
     except Exception as e:
         st.error(f"An error occurred: {e}")
