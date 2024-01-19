@@ -2,7 +2,8 @@
 import streamlit as st
 import pinecone
 import os
-from embedding_docs import process_pdfs, ensure_pinecone_index
+from embedding_docs import process_documents, ensure_pinecone_index
+
 
 OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
 PINECONE_API_KEY = st.secrets["PINECONE_API_KEY"]
@@ -13,8 +14,8 @@ pinecone.init(api_key=PINECONE_API_KEY, environment=PINECONE_API_ENVIRONMENT)
 
 
 # Set up the Streamlit interface
-st.title('PDF Embedding and Indexing')
-st.markdown('Drag and drop your PDF files here to index them in Pinecone.')
+st.title('Document Embedding and Indexing')
+st.markdown('Drag and drop your files here to index them in the Pinecone database.')
 
 # Ensure Pinecone index exists before processing files
 ensure_pinecone_index()
@@ -36,7 +37,7 @@ if uploaded_files:
         pdf_paths.append(temp_pdf_path)
 
     # Process the PDFs and upload to Pinecone
-    process_pdfs(pdf_paths)
+    process_documents(pdf_paths)  # Updated function call
 
     # Clean up the temporary files
     for temp_pdf_path in pdf_paths:
