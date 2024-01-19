@@ -1,1 +1,1 @@
-PINECONE_INDEX_NAME = 'document-answer-langchain-pinecone-openai'
+PINECONE_INDEX_NAME = 'oat'

@@ -2,9 +2,9 @@ import os
 import streamlit as st
 from config import OPENAI_API_KEY, PINECONE_API_KEY, PINECONE_API_ENVIRONMENT
 from constants import PINECONE_INDEX_NAME
-from langchain.chat_models import ChatOpenAI
-from langchain.vectorstores import Pinecone
-from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain_openai import ChatOpenAI
+from langchain_community.vectorstores import Pinecone
+from langchain_openai import OpenAIEmbeddings
 from langchain.chains.question_answering import load_qa_chain
 import pinecone
 
