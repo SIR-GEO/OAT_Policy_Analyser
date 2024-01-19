@@ -16,7 +16,7 @@ pinecone.init(api_key=PINECONE_API_KEY, environment=PINECONE_API_ENVIRONMENT)
 
 # Setting streamlit
 st.title('OAT Policy Analyser')
-usr_input = st.text_input('Ask any question about these OAT Policies: https://www.ormistonacademiestrust.co.uk/who-we-are/docs-and-policies/policies/ And use this link to upload PDFs to the database: https://pdf-to-database.streamlit.app/')
+usr_input = st.text_input('Ask any question about these OAT Policies: https://www.ormistonacademiestrust.co.uk/who-we-are/docs-and-policies/policies/ And use this link to upload PDFs, WORD DOCS, TXT to the database: https://documents-to-database.streamlit.app/')
 
 # Set OpenAI LLM and embeddings
 llm_chat = ChatOpenAI(temperature=0.9,
