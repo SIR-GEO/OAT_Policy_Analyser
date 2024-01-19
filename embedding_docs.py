@@ -34,7 +34,7 @@ def ensure_pinecone_index():
 # ... (other import statements and code)
 
 # Process a single document file
-def process_document(document_path):
+def process_document(document_path, update_callback=None):
     print(f'Loading document: {document_path}')
     file_extension = os.path.splitext(document_path)[1].lower()
     
@@ -51,14 +51,16 @@ def process_document(document_path):
     data = loader.load()
 
     # Assuming all loaders return data in a similar structure
-    print(f'You have loaded a document with {len(data)} pages/sections')
-    print(f'There are {len(data[0].page_content)} characters in your document')
+    if update_callback:
+        update_callback(f'You have loaded a document with {len(data)} pages/sections')
+        update_callback(f'There are {len(data[0].page_content)} characters in your document')
 
     # Chunk data into smaller documents
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
     texts = text_splitter.split_documents(data)
-
-    print(f'You have split your document into {len(texts)} smaller documents')
+    
+    if update_callback:
+        update_callback(f'You have split your document into {len(texts)} smaller documents')
 
     # Create embeddings and index from your documents
     print('Creating embeddings and index...')
@@ -66,11 +68,12 @@ def process_document(document_path):
     docsearch = Pinecone.from_texts(
         [t.page_content for t in texts], embeddings, index_name=PINECONE_INDEX_NAME)
 
-    print('Done!')
+    if update_callback:
+        update_callback('Done!')
 
 # Process multiple document files
-def process_documents(document_paths):
+def process_documents(document_paths, update_callback=None):
     for document_path in document_paths:
-        process_document(document_path)  # Process the file path directly
+        process_document(document_path, update_callback)  # Pass the callback function
 
 # ... (rest of your code)

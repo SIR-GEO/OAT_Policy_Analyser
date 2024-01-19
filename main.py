@@ -19,6 +19,8 @@ st.markdown('Drag and drop your files here to index them in the Pinecone databas
 
 # Ensure Pinecone index exists before processing files
 ensure_pinecone_index()
+def streamlit_update(message):
+    st.write(message)  # This will display the message on the Streamlit page
 
 # File uploader allows user to add their own PDF
 # main.py
@@ -37,7 +39,7 @@ if uploaded_files:
         pdf_paths.append(temp_pdf_path)
 
     # Process the PDFs and upload to Pinecone
-    process_documents(pdf_paths)  # Call the function with the list of file paths
+    process_documents(pdf_paths, update_callback=streamlit_update)  # Pass the update function
 
     # Clean up the temporary files
     for temp_pdf_path in pdf_paths:
