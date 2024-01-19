@@ -5,6 +5,8 @@ import openai
 import logging
 import os
 from embedding_docs import process_document
+from openai import OpenAI
+client = OpenAI()
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
@@ -77,7 +79,7 @@ if search_query:
     print("All file contents:", all_file_contents)  # Debug print
 
     try:
-        search_response = openai.ChatCompletion.create(
+        search_response = client.chat.completions.create(
             model="gpt-3.5-turbo-16k",
             messages=[
                 {"role": "system", "content": "You are a professional analyst called OAT Docs Analyser assistant. You must say if the information does not have enough detail, you must NOT make up facts or lie. You always answer the user's questions using the context given:" + all_file_contents},
