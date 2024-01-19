@@ -8,11 +8,11 @@ from langchain_openai import OpenAIEmbeddings
 from langchain.chains.question_answering import load_qa_chain
 import pinecone
 
-# Use os.environ.get to access environment variables
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
-PINECONE_API_KEY = os.environ.get("PINECONE_API_KEY")
-PINECONE_API_ENVIRONMENT = os.environ.get("PINECONE_API_ENVIRONMENT")
-PINECONE_API_ENVIRONMENT = os.environ.get("oat")
+
+st.write("OPENAI_API_KEY", st.secrets["OPENAI_API_KEY"])
+st.write("PINECONE_API_KEY", st.secrets["PINECONE_API_KEY"])
+st.write("PINECONE_API_ENVIRONMENT", st.secrets["PINECONE_API_ENVIRONMENT"])
+st.write("PINECONE_INDEX_NAME", st.secrets["PINECONE_INDEX_NAME"])
 
 # Setting streamlit
 st.title('OAT Policy Analyser')
