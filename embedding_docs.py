@@ -35,7 +35,10 @@ def ensure_pinecone_index():
 
 # Process a single document file
 def process_document(document_path, update_callback=None):
-    print(f'Loading document: {document_path}')
+    # Extract the filename from the document_path
+    document_name = os.path.basename(document_path)
+    
+    print(f'Loading document: {document_name}')
     file_extension = os.path.splitext(document_path)[1].lower()
     
     # Determine the loader based on the file extension
@@ -52,8 +55,8 @@ def process_document(document_path, update_callback=None):
 
     # Assuming all loaders return data in a similar structure
     if update_callback:
-        update_callback(f'You have loaded a document with {len(data)} pages/sections')
-        update_callback(f'There are {len(data[0].page_content)} characters in your document')
+        update_callback(f'Loaded document "{document_name}" with {len(data)} pages/sections')
+        update_callback(f'There are {len(data[0].page_content)} characters in the document "{document_name}"')
 
     # Chunk data into smaller documents
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
@@ -69,7 +72,7 @@ def process_document(document_path, update_callback=None):
         [t.page_content for t in texts], embeddings, index_name=PINECONE_INDEX_NAME)
 
     if update_callback:
-        update_callback('Done!')
+        update_callback(f'Document "{document_name}" has been processed and indexed!')
 
 # Process multiple document files
 def process_documents(document_paths, update_callback=None):
