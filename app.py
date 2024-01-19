@@ -133,7 +133,7 @@ if search_query:
     try:
         search_response = client.chat.completions.create(
             model="gpt-4-1106-preview",
-            temperature=0.5,
+            temperature=0.6,
             stream = True,
             messages=[
                 {"role": "system", "content": """You are a UK based professional analyst called OAT Docs Analyser assistant.
