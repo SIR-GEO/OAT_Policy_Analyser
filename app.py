@@ -45,7 +45,7 @@ def get_all_file_contents_from_repo(repo_name):
 
 # Set up the Streamlit interface
 st.title('OAT Policy Analyser')
-st.markdown('Upload your policy documents here:')
+st.markdown('## Upload your policy documents here:')
 
 # Streamlit file uploader
 uploaded_files = st.file_uploader("Choose a file", type=['pdf', 'docx', 'txt'], accept_multiple_files=True)
@@ -72,8 +72,8 @@ if uploaded_files:
             else:
                 st.error(f'Failed to process the file: {uploaded_file.name}')
 
-st.markdown('## Search Documents')
-search_query = st.text_input("Enter your search query:")
+st.title('Search Documents')
+search_query = st.text_input("## Enter your search query:")
 
 
 
