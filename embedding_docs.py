@@ -19,6 +19,7 @@ def process_pdf(file_content):
             print(f"An error occurred while processing PDF: {e}")
             return None
         finally:
+            tmp_file.close()  # Ensure the file is closed before attempting to delete it
             os.remove(tmp_file.name)
 
 def process_docx(file_content):
@@ -34,8 +35,8 @@ def process_docx(file_content):
             print(f"An error occurred while processing DOCX: {e}")
             return None
         finally:
+            tmp_file.close()  # Ensure the file is closed before attempting to delete it
             os.remove(tmp_file.name)
-
 # The rest of the embedding_docs.py file remains unchanged
 
 def process_txt(document_path):
