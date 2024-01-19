@@ -5,6 +5,7 @@ import time
 import logging
 import os
 from embedding_docs import process_document
+from streamlit.components.v1 import html
 from openai import OpenAI
 client = OpenAI()
 
@@ -66,6 +67,8 @@ footer_run_time = st.empty()
 # Initialize metrics
 start_time = None
 total_tokens = 0
+tokens_per_sec = 0  # Initialize tokens_per_sec here
+
 
 # Reserve space for the metrics at the bottom of the app
 footer_placeholder = st.empty()
@@ -156,3 +159,34 @@ with footer_placeholder.container():
     st.markdown(f"Tokens / sec: {tokens_per_sec:.2f}")
     st.markdown(f"Tokens: {total_tokens}")
     st.markdown(f"Run time: {run_time:.2f}")
+
+
+# Calculate the predicted cost
+# Assuming `total_tokens` is the number of tokens processed
+input_cost_per_token = 0.01 / 1000  # Cost per token for input
+output_cost_per_token = 0.03 / 1000  # Cost per token for output
+predicted_cost = (total_tokens * (input_cost_per_token + output_cost_per_token))
+
+# Custom CSS to inject into the Streamlit app to create a sticky footer
+footer_html = f"""
+<div style="
+    position: fixed;
+    width: 100%;
+    bottom: 0;
+    left: 0;
+    background-color: #111;
+    color: white;
+    text-align: center;
+    padding: 10px;
+    z-index: 9999;
+">
+    <span>Sec to first token: N/A</span>
+    <span style="margin-left: 30px;">Tokens / sec: {tokens_per_sec:.2f}</span>
+    <span style="margin-left: 30px;">Tokens: {total_tokens}</span>
+    <span style="margin-left: 30px;">Run time: {run_time:.2f}</span>
+    <span style="margin-left: 30px;">Predicted cost: ${predicted_cost:.2f}</span>
+</div>
+"""
+
+# Use the `html` function to render the custom HTML for the sticky footer
+html(footer_html, height=0, scrolling=False)
