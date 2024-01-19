@@ -88,35 +88,52 @@ def get_all_file_contents_from_repo(repo_name):
     return all_file_contents
 
 
+def process_docx(file_path):
+    # Assuming 'process_docx' uses python-docx library to process the document
+    try:
+        doc = Document(file_path)
+        full_text = []
+        for para in doc.paragraphs:
+            full_text.append(para.text)
+        return '\n'.join(full_text)
+    except Exception as e:
+        logging.error(f"An error occurred while processing DOCX: {e}")
+        return None
 
 def convert_to_text(file_buffer, file_name):
     _, file_extension = os.path.splitext(file_name)
+    # Create a temporary file and write the buffer to it
     with tempfile.NamedTemporaryFile(delete=False, suffix=file_extension) as tmp_file:
         tmp_file.write(file_buffer)
+        tmp_file.flush()
         tmp_file_path = tmp_file.name
-        logging.debug(f"Temporary file created at {tmp_file_path}")
 
+    # Check if the file exists before processing
     if not os.path.exists(tmp_file_path):
         logging.error(f"Temporary file {tmp_file_path} does not exist.")
-        raise FileNotFoundError(f"The temporary file {tmp_file_path} was not found.")
+        return None
 
     try:
         if file_extension.lower() == '.pdf':
+            # Process PDF (implementation not shown)
             return process_pdf(tmp_file_path)
         elif file_extension.lower() == '.docx':
-            logging.debug(f"Processing DOCX file at {tmp_file_path}")
-            content = process_docx(tmp_file_path)
-            logging.debug(f"DOCX file processed. Content length: {len(content)}")
-            return content
+            # Process DOCX
+            return process_docx(tmp_file_path)
         elif file_extension.lower() == '.txt':
+            # Process TXT
             with open(tmp_file_path, 'r', encoding='utf-8') as f:
                 return f.read()
         else:
-            raise ValueError(f"Unsupported file type: {file_extension}")
+            logging.error(f"Unsupported file type: {file_extension}")
+            return None
+    except Exception as e:
+        logging.error(f"An error occurred while converting file: {e}")
+        return None
     finally:
         # Clean up the temporary file after processing
         os.remove(tmp_file_path)
-        logging.debug(f"Temporary file {tmp_file_path} deleted.")
+
 
 
 
