@@ -2,6 +2,8 @@ import streamlit as st
 from github import Github
 from langchain_openai import ChatOpenAI
 from embedding_docs import process_documents, process_pdf, process_docx, process_txt
+from PyPDF2 import PdfReader
+from docx import Document
 import tempfile
 import os
 import openai
