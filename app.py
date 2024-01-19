@@ -75,7 +75,8 @@ def get_all_file_contents_from_repo(repo_name):
             file_content = repo.get_contents(content_file.path).decoded_content
             # Assuming you have a function to convert PDF and DOCX to text
             text_content = convert_to_text(file_content, content_file.path)
-            all_file_contents += text_content + "\n\n"
+            if text_content is not None:
+                all_file_contents += text_content + "\n\n"
     return all_file_contents
 
 
