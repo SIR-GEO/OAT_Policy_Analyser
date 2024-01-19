@@ -38,7 +38,9 @@ def get_all_file_contents_from_repo(repo_name):
     for content_file in contents:
         if content_file.type == "file":
             file_content = repo.get_contents(content_file.path).decoded_content.decode().strip()
-            all_file_contents.append(file_content)
+            # Include the filename as metadata
+            document_with_metadata = f"### Document: {content_file.name}\n{file_content}\n"
+            all_file_contents.append(document_with_metadata)
     return "\n".join(all_file_contents)
 
 # Set up the Streamlit interface
@@ -82,16 +84,26 @@ if search_query:
     try:
         search_response = client.chat.completions.create(
             model="gpt-4-1106-preview",
+            stream = True,
             messages=[
-                {"role": "system", "content": "You are a professional analyst called OAT Docs Analyser assistant. You must say if the information does not have enough detail, you must NOT make up facts or lie. You always answer the user's questions using the context given:" + all_file_contents},
+                {"role": "system", "content": "You are a professional analyst called OAT Docs Analyser assistant. You must say if the information does not have enough detail, you must NOT make up facts or lie. You must always source which document you used to generate an answer, the answer will be given in the format Document: (content filename here) You always answer the user's questions using the context given:" + all_file_contents},
                 {"role": "user", "content": search_query}
             ]
         )
-        
-        if search_response.choices:
-            # Assuming that the 'content' attribute exists within the 'message' object
-            response_content = search_response.choices[0].message.content  # Direct attribute access
-            st.write(response_content)
+
+        # Placeholder for streaming responses
+        response_placeholder = st.empty()
+
+                # Initialize an empty string to hold the response
+        full_response = ""
+
+        # Iterate over the stream and update the placeholder
+        for chunk in search_response:
+            if chunk.choices[0].delta.content is not None:
+                # Append new content to the full response
+                full_response += chunk.choices[0].delta.content
+                # Update the placeholder with the full response so far
+                response_placeholder.write(full_response)
         else:
             st.error("No response received from the model.")
     except Exception as e:
