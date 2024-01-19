@@ -6,6 +6,12 @@ import tempfile
 import os
 import openai
 from openai import OpenAI
+import logging
+
+
+# Set up logging
+logging.basicConfig(level=logging.DEBUG)
+
 client = OpenAI()
 
 repo_name = "OAT_Policies"
@@ -42,29 +48,27 @@ st.markdown('Upload your policy documents here:')
 # Streamlit file uploader
 uploaded_files = st.file_uploader("Choose a file", type=['pdf', 'docx', 'txt'], accept_multiple_files=True)
 
-# Process each uploaded file
+# Process each uploaded file and upload the text content to GitHub
 if uploaded_files:
     repo_name = "OAT_Policies"  
     with tempfile.TemporaryDirectory() as temp_dir:
-        document_paths = []
         for uploaded_file in uploaded_files:
             # Save the uploaded file to a temporary directory
             temp_file_path = os.path.join(temp_dir, uploaded_file.name)
             with open(temp_file_path, 'wb') as f:
                 f.write(uploaded_file.getbuffer())
-            document_paths.append(temp_file_path)
 
-        # Process documents
-        documents_content = process_documents(document_paths)
+            # Convert the file to text
+            text_content = convert_to_text(uploaded_file.getbuffer(), uploaded_file.name)
 
-        # Upload processed content to GitHub
-        for document_path, file_content in documents_content.items():
-            file_name = os.path.basename(document_path)
-            # Ensure the file content is a string
-            if isinstance(file_content, bytes):
-                file_content = file_content.decode('utf-8')
-            upload_file_to_github(repo_name, file_name, file_content, "Upload new file")
+            # Create a text file name by replacing the original extension with .txt
+            text_file_name = os.path.splitext(uploaded_file.name)[0] + '.txt'
 
+            # Upload text content to GitHub
+            if text_content:
+                upload_file_to_github(repo_name, text_file_name, text_content, "Upload processed text file")
+            else:
+                st.error(f'Failed to process the file: {uploaded_file.name}')
 
 
 # Function to fetch all file contents from the GitHub repo
@@ -83,17 +87,36 @@ def get_all_file_contents_from_repo(repo_name):
 
 
 
-def convert_to_text(file_content, file_path):
-    # Use the appropriate function from embedding_docs.py based on the file extension
-    _, file_extension = os.path.splitext(file_path)
-    if file_extension.lower() == '.pdf':
-        return process_pdf(file_path)
-    elif file_extension.lower() == '.docx':
-        return process_docx(file_path)
-    elif file_extension.lower() == '.txt':
-        return process_txt(file_path)
-    else:
-        raise ValueError(f"Unsupported file type: {file_extension}")
+def convert_to_text(file_buffer, file_name):
+    _, file_extension = os.path.splitext(file_name)
+    with tempfile.NamedTemporaryFile(delete=False, suffix=file_extension) as tmp_file:
+        tmp_file.write(file_buffer)
+        tmp_file_path = tmp_file.name
+        logging.debug(f"Temporary file created at {tmp_file_path}")
+
+    if not os.path.exists(tmp_file_path):
+        logging.error(f"Temporary file {tmp_file_path} does not exist.")
+        raise FileNotFoundError(f"The temporary file {tmp_file_path} was not found.")
+
+    try:
+        if file_extension.lower() == '.pdf':
+            return process_pdf(tmp_file_path)
+        elif file_extension.lower() == '.docx':
+            logging.debug(f"Processing DOCX file at {tmp_file_path}")
+            content = process_docx(tmp_file_path)
+            logging.debug(f"DOCX file processed. Content length: {len(content)}")
+            return content
+        elif file_extension.lower() == '.txt':
+            with open(tmp_file_path, 'r', encoding='utf-8') as f:
+                return f.read()
+        else:
+            raise ValueError(f"Unsupported file type: {file_extension}")
+    finally:
+        # Clean up the temporary file after processing
+        os.remove(tmp_file_path)
+        logging.debug(f"Temporary file {tmp_file_path} deleted.")
+
+
 
 
 st.markdown('## Search Documents')
