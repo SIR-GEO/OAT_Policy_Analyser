@@ -115,8 +115,9 @@ if st.button('Search'):
             )
 
       # Assuming search_response is the result of the OpenAI API call and stream=False
+    # Assuming search_response is the result of the OpenAI API call and stream=False
     if search_response.choices:
-        response_content = search_response.choices[0].message['content']
+        response_content = search_response.choices[0].message.content  # Access using dot notation
         st.text_area("Search Results:", value=response_content, height=200, disabled=True)
     else:
         st.error("No response received from the model.")
