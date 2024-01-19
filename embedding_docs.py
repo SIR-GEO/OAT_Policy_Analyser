@@ -40,7 +40,6 @@ def process_docx(file_content):
 # The rest of the embedding_docs.py file remains unchanged
 
 def process_txt(document_path):
-    # Implement TXT processing here
     try:
         with open(document_path, 'r', encoding='utf-8') as file:
             content = file.read()
