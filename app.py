@@ -4,6 +4,9 @@ from langchain_openai import ChatOpenAI
 from embedding_docs import process_documents, process_pdf, process_docx, process_txt
 import tempfile
 import os
+import openai
+from openai import OpenAI
+client = OpenAI()
 
 repo_name = "OAT_Policies"
 
@@ -12,9 +15,6 @@ g = Github(st.secrets["GITHUB_TOKEN"])
 OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
 
 
-# Set OpenAI LLM and embeddings
-llm_chat = ChatOpenAI(temperature=0.9,
-                      model='gpt-4-1106-preview', client='')
 
 def upload_file_to_github(repo_name, file_path, file_content, commit_message):
     repo = g.get_user().get_repo(repo_name)
@@ -104,9 +104,16 @@ if st.button('Search'):
         # Fetch all file contents from the repo
         all_file_contents = get_all_file_contents_from_repo(repo_name)
         
-        # Send the contents and the search query to the llm_chat model
-        search_response = llm_chat.generate_response(all_file_contents, search_query)
-        
+
+        search_response = client.chat.completions.create(
+            model="gpt-3.5-16k",
+            stream = True,
+            messages=[
+                {"role": "system", "content": "You are a professional analysis called OAT Docs Analyser assistant. You must say if you the information does not have enough detail, you must not make up facts or lie. You always answer the user's answers using the context given: {all_file_contents} "},
+                {"role": "user", "content": {search_query}}
+            ]
+            )
+
         # Display the search results
         st.text_area("Search Results:", value=search_response.text, height=200, disabled=True)
     else:
