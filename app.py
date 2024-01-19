@@ -104,6 +104,9 @@ if search_query:
     # Fetch all file contents from the repo
     all_file_contents = get_all_file_contents_from_repo(repo_name)
     
+        # Print the all_file_contents for debugging purposes
+    print(all_file_contents)
+    
     try:
         search_response = client.chat.completions.create(
             model="gpt-3.5-turbo-16k",
