@@ -30,18 +30,21 @@ def ensure_pinecone_index():
         )
 
 
+# embedding_docs.py
+# ... (other import statements and code)
+
 # Process a single document file
-def process_document(document_file):
-    print(f'Loading document: {document_file}')
-    file_extension = os.path.splitext(document_file)[1].lower()
+def process_document(document_path):
+    print(f'Loading document: {document_path}')
+    file_extension = os.path.splitext(document_path)[1].lower()
     
     # Determine the loader based on the file extension
     if file_extension == '.pdf':
-        loader = UnstructuredPDFLoader(document_file)
+        loader = UnstructuredPDFLoader(document_path)
     elif file_extension == '.docx':
-        loader = Docx2txtLoader(document_file)
+        loader = Docx2txtLoader(document_path)
     elif file_extension == '.txt':
-        loader = TextLoader(document_file)
+        loader = TextLoader(document_path)
     else:
         raise ValueError(f'Unsupported file type: {file_extension}')
     
@@ -66,11 +69,8 @@ def process_document(document_file):
     print('Done!')
 
 # Process multiple document files
-def process_documents(document_files):
-    for document_file in document_files:
-        # Here you would handle the actual file object, saving it to a temporary file
-        # and then passing the file path to the process_document function
-        with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(document_file.name)[1]) as tmp_file:
-            tmp_file.write(document_file.getvalue())
-            process_document(tmp_file.name)  # Process the temporary file
-            os.unlink(tmp_file.name)  # Clean up the temporary file
+def process_documents(document_paths):
+    for document_path in document_paths:
+        process_document(document_path)  # Process the file path directly
+
+# ... (rest of your code)

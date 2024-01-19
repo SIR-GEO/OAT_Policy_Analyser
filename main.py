@@ -37,7 +37,7 @@ if uploaded_files:
         pdf_paths.append(temp_pdf_path)
 
     # Process the PDFs and upload to Pinecone
-    process_documents(pdf_paths)  # Updated function call
+    process_documents(pdf_paths)  # Call the function with the list of file paths
 
     # Clean up the temporary files
     for temp_pdf_path in pdf_paths:
