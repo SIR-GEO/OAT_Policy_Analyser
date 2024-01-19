@@ -26,7 +26,7 @@ def upload_file_to_github(repo_name, file_path, file_content, commit_message):
     except Exception as e:
         if getattr(e, 'status', None) == 404:  # File not found
             repo.create_file(file_path, commit_message, file_content)
-            st.success('File created successfully!')
+            st.success(f'File "{file_path}" created successfully!')
         else:
             st.error('An error occurred while uploading the file.')
             raise e
@@ -87,7 +87,11 @@ if search_query:
             temperature=0.5,
             stream = True,
             messages=[
-                {"role": "system", "content": "You are a professional analyst called OAT Docs Analyser assistant. You must say if the information does not have enough detail, you must NOT make up facts or lie. At the end of any response, you must always source any information you used in your response, each document source will be given in the format **Document Source: (content filename here)**. You must always answer the user's questions using the context given:" + all_file_contents},
+                {"role": "system", "content": """You are a professional analyst called OAT Docs Analyser assistant. 
+                 You must say if the information does not have enough detail, you must NOT make up facts or lie. 
+                 At the end of any response, you must always source any information you used in your response, 
+                 each document source will be given in the format **Document Source: (content filename here)**. 
+                 You must always answer the user's questions using the context given:""" + all_file_contents},
                 {"role": "user", "content": search_query}
             ]
         )
