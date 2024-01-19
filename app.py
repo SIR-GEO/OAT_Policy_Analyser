@@ -54,17 +54,21 @@ if uploaded_files:
         # Read the file content into memory
         file_content = uploaded_file.read()
 
-        # Convert the file to text
-        text_content = process_document(uploaded_file.name, file_content)
-
-        # Create a text file name by replacing the original extension with .txt
-        text_file_name = os.path.splitext(uploaded_file.name)[0] + '.txt'
-
-        # Upload text content to GitHub
-        if text_content:
-            upload_file_to_github(repo_name, text_file_name, text_content, "Upload processed text file")
+        # Check the file extension and process accordingly
+        _, file_extension = os.path.splitext(uploaded_file.name)
+        if file_extension.lower() == '.txt':
+            # For .txt files, upload the content directly
+            text_file_name = uploaded_file.name
+            upload_file_to_github(repo_name, text_file_name, file_content.decode('utf-8'), "Upload .txt file")
         else:
-            st.error(f'Failed to process the file: {uploaded_file.name}')
+            # For other file types, convert to text and then upload
+            text_content = process_document(uploaded_file.name, file_content)
+            if text_content:
+                # Create a text file name by replacing the original extension with .txt
+                text_file_name = os.path.splitext(uploaded_file.name)[0] + '.txt'
+                upload_file_to_github(repo_name, text_file_name, text_content, "Upload processed text file")
+            else:
+                st.error(f'Failed to process the file: {uploaded_file.name}')
 
 st.markdown('## Search Documents')
 search_query = st.text_input("Enter your search query:")
@@ -80,7 +84,7 @@ if search_query:
 
     try:
         search_response = client.chat.completions.create(
-            model="gpt-4-32k",
+            model="gpt-4-32k-0613",
             messages=[
                 {"role": "system", "content": "You are a professional analyst called OAT Docs Analyser assistant. You must say if the information does not have enough detail, you must NOT make up facts or lie. You always answer the user's questions using the context given:" + all_file_contents},
                 {"role": "user", "content": search_query}
