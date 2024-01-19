@@ -9,10 +9,11 @@ from langchain.chains.question_answering import load_qa_chain
 import pinecone
 
 
-st.write("OPENAI_API_KEY", st.secrets["OPENAI_API_KEY"])
-st.write("PINECONE_API_KEY", st.secrets["PINECONE_API_KEY"])
-st.write("PINECONE_API_ENVIRONMENT", st.secrets["PINECONE_API_ENVIRONMENT"])
-st.write("PINECONE_INDEX_NAME", st.secrets["PINECONE_INDEX_NAME"])
+OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
+PINECONE_API_KEY = st.secrets["PINECONE_API_KEY"]
+PINECONE_API_ENVIRONMENT = st.secrets["PINECONE_API_ENVIRONMENT"]
+PINECONE_INDEX_NAME = st.secrets["PINECONE_INDEX_NAME"]
+
 
 # Setting streamlit
 st.title('OAT Policy Analyser')
