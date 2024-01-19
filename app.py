@@ -104,7 +104,6 @@ if search_query:
                 full_response += chunk.choices[0].delta.content
                 # Update the placeholder with the full response so far
                 response_placeholder.write(full_response)
-        else:
-            st.error("No response received from the model.")
+
     except Exception as e:
         st.error(f"An error occurred: {e}")
