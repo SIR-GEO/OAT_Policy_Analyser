@@ -19,8 +19,9 @@ openai.api_key = st.secrets["OPENAI_API_KEY"]
 
 repo_name = "OAT_Policies"
 
-def get_todays_date():
-    return datetime.today().strftime('%Y-%m-%d')  # Returns date in YYYY-MM-DD format
+def get_current_date_and_time():
+    return datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Returns date and time in 'YYYY-MM-DD HH:MM:SS' format
+
 
 def upload_file_to_github(repo_name, file_path, file_content, commit_message):
     repo = g.get_user().get_repo(repo_name)
@@ -120,7 +121,7 @@ footer_tokens_per_sec = st.empty()
 footer_tokens = st.empty()
 footer_run_time = st.empty()
 
-today_date = get_todays_date()
+current_date_and_time = get_current_date_and_time()
 
 if search_query:
     # Fetch all file contents from the repo
@@ -140,7 +141,7 @@ if search_query:
                 You must say if the information does not have enough detail, you must NOT make up facts or lie. 
                 At the end of any response, you must always source every single document source information you used in your response, 
                 each document source will be given in the format **Document Source: (insert content filename here)**. 
-                You must always answer the user's questions using all the information in documents given:""" + all_file_contents + "Today's date will given next, use that information to relate to relevant user questions " + today_date + ""},
+                You must always answer the user's questions using all the information in documents given:""" + all_file_contents + "Today's date and time will given next, use that information to relate contextually relevant user questions " + {current_date_and_time}},
                 {"role": "user", "content": search_query}
             ]
         )
