@@ -97,27 +97,29 @@ def convert_to_text(file_content, file_path):
 
 
 st.markdown('## Search Documents')
-search_query = st.text_input("Enter your search query:")
+# Streamlit text input for search query with on_change callback
+search_query = st.text_input("Enter your search query:", on_change=lambda: search_documents(repo_name, search_query))
 
-if st.button('Search'):
+def search_documents(repo_name, search_query):
     if search_query:
         # Fetch all file contents from the repo
         all_file_contents = get_all_file_contents_from_repo(repo_name)
-        
 
         search_response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            stream = False,
+            model="text-davinci-003",  # Replace with a valid model name
+            stream=False,
             messages=[
-                {"role": "system", "content": "You are a professional analysis called OAT Docs Analyser assistant. You must say if you the information does not have enough detail, you must not make up facts or lie. You always answer the user's answers using the context given:" + all_file_contents},
+                {"role": "system", "content": "You are a professional analysis called OAT Docs Analyser assistant. You must say if the information does not have enough detail, you must not make up facts or lie. You always answer the user's answers using the context given:" + all_file_contents},
                 {"role": "user", "content": search_query}
             ]
-            )
+        )
 
-      # Assuming search_response is the result of the OpenAI API call and stream=False
-    # Assuming search_response is the result of the OpenAI API call and stream=False
-    if search_response.choices:
-        response_content = search_response.choices[0].message.content  # Access using dot notation
-        st.text_area("Search Results:", value=response_content, height=200, disabled=True)
-    else:
-        st.error("No response received from the model.")
+        if search_response.choices:
+            response_content = search_response.choices[0].message.content
+            st.text_area("Search Results:", value=response_content, height=200, disabled=True)
+        else:
+            st.error("No response received from the model.")
+
+# Call the search function if there is a query present
+if search_query:
+    search_documents(repo_name, search_query)
