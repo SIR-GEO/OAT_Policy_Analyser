@@ -19,6 +19,9 @@ openai.api_key = st.secrets["OPENAI_API_KEY"]
 
 repo_name = "OAT_Policies"
 
+# Create a container for the AI responses
+ai_responses_container = st.container()
+
 def get_current_date_and_time():
     return datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Returns date and time in 'YYYY-MM-DD HH:MM:SS' format
 
@@ -181,6 +184,10 @@ if search_query:
 
                 # Update the placeholder with the full response so far
                 response_placeholder.write(full_response)
+
+                # Add the new AI response to the top of the container
+                with ai_responses_container.container():
+                    st.write(full_response)
 
                 # If this is the first response, store it in first_search_response
                 if first_search_response is None:
