@@ -9,6 +9,8 @@ import os
 import openai
 from openai import OpenAI
 import logging
+import shutil
+
 
 
 # Set up logging
@@ -88,13 +90,12 @@ def get_all_file_contents_from_repo(repo_name):
     return all_file_contents
 
 
+
+
 def process_docx(file_path):
-    # Assuming 'process_docx' uses python-docx library to process the document
     try:
         doc = Document(file_path)
-        full_text = []
-        for para in doc.paragraphs:
-            full_text.append(para.text)
+        full_text = [para.text for para in doc.paragraphs]
         return '\n'.join(full_text)
     except Exception as e:
         logging.error(f"An error occurred while processing DOCX: {e}")
@@ -106,23 +107,16 @@ def convert_to_text(file_buffer, file_name):
     with tempfile.NamedTemporaryFile(delete=False, suffix=file_extension) as tmp_file:
         tmp_file.write(file_buffer)
         tmp_file.flush()
-        tmp_file_path = tmp_file.name
-
-    # Check if the file exists before processing
-    if not os.path.exists(tmp_file_path):
-        logging.error(f"Temporary file {tmp_file_path} does not exist.")
-        return None
+#    Make a persistent copy because some libraries have issues with NamedTemporaryFile
+    persistent_temp_file_path = shutil.copy(tmp_file.name, tmp_file.name + "_persistent")
 
     try:
         if file_extension.lower() == '.pdf':
-            # Process PDF (implementation not shown)
-            return process_pdf(tmp_file_path)
+            return process_pdf(persistent_temp_file_path)
         elif file_extension.lower() == '.docx':
-            # Process DOCX
-            return process_docx(tmp_file_path)
+            return process_docx(persistent_temp_file_path)
         elif file_extension.lower() == '.txt':
-            # Process TXT
-            with open(tmp_file_path, 'r', encoding='utf-8') as f:
+            with open(persistent_temp_file_path, 'r', encoding='utf-8') as f:
                 return f.read()
         else:
             logging.error(f"Unsupported file type: {file_extension}")
@@ -131,8 +125,10 @@ def convert_to_text(file_buffer, file_name):
         logging.error(f"An error occurred while converting file: {e}")
         return None
     finally:
-        # Clean up the temporary file after processing
-        os.remove(tmp_file_path)
+        # Clean up the temporary files after processing
+        os.remove(persistent_temp_file_path)
+        if os.path.exists(tmp_file.name):  # Remove the original temp file if it still exists
+            os.remove(tmp_file.name)
 
 
 
