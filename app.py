@@ -150,6 +150,12 @@ if search_query:
                 run_time = time.time() - start_time
                 tokens_per_sec = total_tokens / run_time if run_time > 0 else 0
 
+                 # Update the first token time and metric if it's the first token
+                if first_token_time is None:
+                    first_token_time = time.time()
+                    sec_to_first_token = first_token_time - start_time
+                    footer_sec_to_first_token.markdown(f"Sec to first token: {sec_to_first_token:.2f}")
+
                 # Update the footer with the metrics
                 footer_tokens_per_sec.markdown(f"Tokens / sec: {tokens_per_sec:.2f}")
                 footer_tokens.markdown(f"Tokens: {total_tokens}")
