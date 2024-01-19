@@ -90,8 +90,8 @@ if search_query:
                 {"role": "system", "content": """You are a professional analyst called OAT Docs Analyser assistant. 
                  You must say if the information does not have enough detail, you must NOT make up facts or lie. 
                  At the end of any response, you must always source every single document source information you used in your response, 
-                 each document source will be given in the format **Document Source: (content filename here)**. 
-                 You must always answer the user's questions using the context given:""" + all_file_contents},
+                 each document source will be given in the format **Document Source: (insert content filename here)**. 
+                 You must always answer the user's questions using all the information in documents given:""" + all_file_contents},
                 {"role": "user", "content": search_query}
             ]
         )
