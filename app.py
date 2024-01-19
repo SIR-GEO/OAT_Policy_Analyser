@@ -6,6 +6,7 @@ import logging
 import os
 from embedding_docs import process_document
 from streamlit.components.v1 import html
+from datetime import datetime
 from openai import OpenAI
 client = OpenAI()
 
@@ -17,6 +18,9 @@ g = Github(st.secrets["GITHUB_TOKEN"])
 openai.api_key = st.secrets["OPENAI_API_KEY"]
 
 repo_name = "OAT_Policies"
+
+def get_todays_date():
+    return datetime.today().strftime('%Y-%m-%d')  # Returns date in YYYY-MM-DD format
 
 def upload_file_to_github(repo_name, file_path, file_content, commit_message):
     repo = g.get_user().get_repo(repo_name)
@@ -116,6 +120,8 @@ footer_tokens_per_sec = st.empty()
 footer_tokens = st.empty()
 footer_run_time = st.empty()
 
+today_date = get_todays_date()
+
 if search_query:
     # Fetch all file contents from the repo
     all_file_contents = get_all_file_contents_from_repo(repo_name)
@@ -134,7 +140,7 @@ if search_query:
                  You must say if the information does not have enough detail, you must NOT make up facts or lie. 
                  At the end of any response, you must always source every single document source information you used in your response, 
                  each document source will be given in the format **Document Source: (insert content filename here)**. 
-                 You must always answer the user's questions using all the information in documents given:""" + all_file_contents},
+                 You must always answer the user's questions using all the information in documents given:""" + all_file_contents + "Today's date will given next, use that information to relate to relevant user questions " + today_date + ""},
                 {"role": "user", "content": search_query}
             ]
         )
@@ -168,7 +174,7 @@ if search_query:
         st.error(f"An error occurred: {e}")
 
 
-# At the end of your Streamlit app, where you want to display the footer
+# At the end of Streamlit app, custom css to display the footer stuff
 def render_footer(tokens_per_sec, total_tokens, run_time, predicted_cost):
     footer_html = f"""
     <style>
