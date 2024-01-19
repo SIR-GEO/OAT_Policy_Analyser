@@ -69,9 +69,9 @@ tokens_per_sec = 0
 footer_tokens_per_sec = 0  # Initialize tokens_per_sec here
 run_time = 0  # Initialize run_time here
 
-
-
+# Create a placeholder for the footer
 footer_placeholder = st.empty()
+
 # Streamlit file uploader
 uploaded_files = st.file_uploader("Upload Documents", type=['pdf', 'docx', 'txt'], accept_multiple_files=True)
 
@@ -233,5 +233,5 @@ if __name__ == "__main__":
     output_cost_per_token = 0.03 / 1000  # Cost per token for output
     predicted_cost = (total_tokens * (input_cost_per_token + output_cost_per_token))
 
-    # Call the function to render the footer with the updated metrics
-    render_footer(tokens_per_sec, total_tokens, run_time, predicted_cost)
+    # At the end of your Streamlit app, update the footer in the placeholder
+    footer_placeholder.markdown(render_footer(tokens_per_sec, total_tokens, run_time, predicted_cost))
