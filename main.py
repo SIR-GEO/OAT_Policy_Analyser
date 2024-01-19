@@ -21,7 +21,7 @@ ensure_pinecone_index()
 
 # File uploader allows user to add their own PDF
 # main.py
-uploaded_files = st.file_uploader("Upload PDF, DOCX, TXT files", type=['pdf', 'docx', 'txt'], accept_multiple_files=True)
+uploaded_files = st.file_uploader("Upload PDF, DOCX, TXT files. Use this link to chat with those documents: https://oat-policy-analyser.streamlit.app/", type=['pdf', 'docx', 'txt'], accept_multiple_files=True)
 
 if uploaded_files:
     # Save the PDFs to temporary files and collect their paths
