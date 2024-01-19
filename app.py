@@ -79,9 +79,6 @@ if search_query:
     # Fetch all file contents from the repo
     all_file_contents = get_all_file_contents_from_repo(repo_name)
 
-    # Print the all_file_contents for debugging purposes
-    print("All file contents:", all_file_contents)  # Debug print
-
     try:
         search_response = client.chat.completions.create(
             model="gpt-4-1106-preview",
@@ -94,7 +91,7 @@ if search_query:
         if search_response.choices:
             # Assuming that the 'content' attribute exists within the 'message' object
             response_content = search_response.choices[0].message.content  # Direct attribute access
-            st.text_area("Search Results:", value=response_content, height=200, disabled=True)
+            st.write(response_content)
         else:
             st.error("No response received from the model.")
     except Exception as e:
