@@ -106,7 +106,7 @@ if search_query:
     
     try:
         search_response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model="gpt-3.5-16k",
             stream = False,
             messages=[
                 {"role": "system", "content": "You are a professional analysis called OAT Docs Analyser assistant. You must say if you the information does not have enough detail, you must not make up facts or lie. You always answer the user's answers using the context given:" + all_file_contents},
