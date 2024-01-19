@@ -98,7 +98,7 @@ def convert_to_text(file_content, file_path):
 
 st.markdown('## Search Documents')
 # Streamlit text input for search query with on_change callback
-search_query = st.text_input("Enter your search query:", on_change=lambda: search_documents(repo_name, search_query))
+user_query = st.text_input("Enter your search query:", on_change=lambda: search_documents(repo_name, search_query))
 
 def search_documents(repo_name, search_query):
     if search_query:
@@ -106,11 +106,11 @@ def search_documents(repo_name, search_query):
         all_file_contents = get_all_file_contents_from_repo(repo_name)
 
         search_response = client.chat.completions.create(
-            model="text-davinci-003",  # Replace with a valid model name
+            model="gpt-3.5-turbo",
             stream=False,
             messages=[
                 {"role": "system", "content": "You are a professional analysis called OAT Docs Analyser assistant. You must say if the information does not have enough detail, you must not make up facts or lie. You always answer the user's answers using the context given:" + all_file_contents},
-                {"role": "user", "content": search_query}
+                {"role": "user", "content": user_query}
             ]
         )
 
