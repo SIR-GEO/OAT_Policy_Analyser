@@ -14,6 +14,7 @@ PINECONE_API_KEY = st.secrets["PINECONE_API_KEY"]
 PINECONE_API_ENVIRONMENT = st.secrets["PINECONE_API_ENVIRONMENT"]
 PINECONE_INDEX_NAME = st.secrets["PINECONE_INDEX_NAME"]
 
+pinecone.init(api_key=PINECONE_API_KEY, environment=PINECONE_API_ENVIRONMENT)
 
 # Setting streamlit
 st.title('OAT Policy Analyser')
@@ -27,7 +28,7 @@ embeddings = OpenAIEmbeddings(client='')
 
 # Set Pinecone index
 docsearch = Pinecone.from_existing_index(
-    index_name='oat', embedding=embeddings)
+    index_name=PINECONE_INDEX_NAME, embedding=embeddings)
 
 # Create chain
 chain = load_qa_chain(llm_chat)
