@@ -1,16 +1,14 @@
 # main.py
 import streamlit as st
-import pinecone
 import os
 from embedding_docs import process_documents, ensure_pinecone_index
+from github import Github
 
+# Initialize GitHub client with your token
+g = Github("your_github_token")
 
 OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
-PINECONE_API_KEY = st.secrets["PINECONE_API_KEY"]
-PINECONE_API_ENVIRONMENT = st.secrets["PINECONE_API_ENVIRONMENT"]
-PINECONE_INDEX_NAME = st.secrets["PINECONE_INDEX_NAME"]
 
-pinecone.init(api_key=PINECONE_API_KEY, environment=PINECONE_API_ENVIRONMENT)
 
 
 # Set up the Streamlit interface
@@ -47,4 +45,13 @@ if uploaded_files:
 
     st.success('All files have been processed and indexed!')
 
+
+def upload_file_to_github(repo_name, file_path, file_content, commit_message):
+    repo = g.get_user().get_repo(repo_name)
+    repo.create_file(file_path, commit_message, file_content)
+
+def get_file_from_github(repo_name, file_path):
+    repo = g.get_user().get_repo(repo_name)
+    contents = repo.get_contents(file_path)
+    return contents.decoded_content.decode("utf-8")
 # Run the Streamlit app with `streamlit run main.py`

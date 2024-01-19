@@ -1,21 +1,14 @@
 # embedding_docs.py
 import os
-import pinecone
 import streamlit as st
 import tempfile
 from langchain_community.document_loaders import UnstructuredPDFLoader, TextLoader
 from langchain_community.document_loaders.word_document import Docx2txtLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.vectorstores import Pinecone
 from langchain_openai import OpenAIEmbeddings
 
 
 OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
-PINECONE_API_KEY = st.secrets["PINECONE_API_KEY"]
-PINECONE_API_ENVIRONMENT = st.secrets["PINECONE_API_ENVIRONMENT"]
-PINECONE_INDEX_NAME = st.secrets["PINECONE_INDEX_NAME"]
-
-pinecone.init(api_key=PINECONE_API_KEY, environment=PINECONE_API_ENVIRONMENT)
 
 
 # Ensure the Pinecone index exists
