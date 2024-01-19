@@ -73,7 +73,7 @@ if uploaded_files:
                 st.error(f'Failed to process the file: {uploaded_file.name}')
 
 st.title('Search Documents')
-search_query = st.text_input('## Enter your search query:')
+search_query = st.text_input('Enter your search query:')
 
 
 
