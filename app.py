@@ -39,7 +39,7 @@ def get_all_file_contents_from_repo(repo_name):
         if content_file.type == "file":
             file_content = repo.get_contents(content_file.path).decoded_content.decode().strip()
             # Include the filename as metadata
-            document_with_metadata = f"### Document: {content_file.name}\n{file_content}\n"
+            document_with_metadata = f"### Document Source: {content_file.name}\n{file_content}\n"
             all_file_contents.append(document_with_metadata)
     return "\n".join(all_file_contents)
 
@@ -86,7 +86,7 @@ if search_query:
             model="gpt-4-1106-preview",
             stream = True,
             messages=[
-                {"role": "system", "content": "You are a professional analyst called OAT Docs Analyser assistant. You must say if the information does not have enough detail, you must NOT make up facts or lie. You must always source which document you used to generate an answer, the answer will be given in the format Document: (content filename here) You always answer the user's questions using the context given:" + all_file_contents},
+                {"role": "system", "content": "You are a professional analyst called OAT Docs Analyser assistant. You must say if the information does not have enough detail, you must NOT make up facts or lie. At the end of any response, you must always source which document you used to generate an answer, the answer will be given in the format Document Source: (content filename here) You always answer the user's questions using the context given:" + all_file_contents},
                 {"role": "user", "content": search_query}
             ]
         )
