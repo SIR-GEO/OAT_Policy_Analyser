@@ -125,6 +125,8 @@ footer_run_time = st.empty()
 
 current_date_and_time = get_current_date_and_time()
 
+first_search_response = None
+
 if search_query:
     # Fetch all file contents from the repo
     all_file_contents = get_all_file_contents_from_repo(repo_name)
@@ -151,14 +153,14 @@ if search_query:
             ] + conversation_history  # Include the conversation history in the messages
         else:
             # If this is a follow-up question, only include the conversation history
-            messages = conversation_history
+            messages = "You must answer the query:" + search_query + "using the information provided in a previous answer:" + first_search_response + "and the database information" + conversation_history
 
         # Separate AI API call for handling user follow up questions, reduces massive user of tokens.
         search_response = client.chat.completions.create(
             model="gpt-4-1106-preview",
             temperature=0.5,
             stream = True,
-            messages= "You must answer the query:" + search_query + "using the information provided in a previous question and answer:" + messages
+            messages=messages
         )
 
         # Placeholder for streaming responses
@@ -179,6 +181,10 @@ if search_query:
 
                 # Update the placeholder with the full response so far
                 response_placeholder.write(full_response)
+
+                # If this is the first response, store it in first_search_response
+                if first_search_response is None:
+                    first_search_response = full_response
 
                 # Calculate and update tokens and run time
                 total_tokens += len(chunk.choices[0].delta.content.split())
