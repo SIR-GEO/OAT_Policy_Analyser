@@ -86,7 +86,7 @@ if search_query:
             model="gpt-4-1106-preview",
             stream = True,
             messages=[
-                {"role": "system", "content": "You are a professional analyst called OAT Docs Analyser assistant. You must say if the information does not have enough detail, you must NOT make up facts or lie. At the end of any response, you must always source any information you used in your response, each document source will be given in the format Document Source: (content filename here). You must always answer the user's questions using the context given:" + all_file_contents},
+                {"role": "system", "content": "You are a professional analyst called OAT Docs Analyser assistant. You must say if the information does not have enough detail, you must NOT make up facts or lie. At the end of any response, you must always source any information you used in your response, each document source will be given in the format *Document Source: (content filename here)*. You must always answer the user's questions using the context given:" + all_file_contents},
                 {"role": "user", "content": search_query}
             ]
         )
