@@ -48,7 +48,7 @@ st.title('OAT Policy Analyser')
 st.markdown('## Upload your policy documents here:')
 
 # Streamlit file uploader
-uploaded_files = st.file_uploader(type=['pdf', 'docx', 'txt'], accept_multiple_files=True)
+uploaded_files = st.file_uploader("Upload Documents", type=['pdf', 'docx', 'txt'], accept_multiple_files=True)
 
 # Process each uploaded file and upload the text content to GitHub
 if uploaded_files:
