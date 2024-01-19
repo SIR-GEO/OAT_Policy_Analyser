@@ -60,7 +60,6 @@ def get_all_file_contents_from_repo(repo_name):
 
 # Set up the Streamlit interface
 st.title('OAT Policy Analyser')
-st.markdown('Upload your policy documents here:')
 
 # Initialize metrics
 start_time = None
@@ -73,7 +72,7 @@ run_time = 0  # Initialize run_time here
 footer_placeholder = st.empty()
 
 # Streamlit file uploader
-uploaded_files = st.file_uploader("Upload Documents", type=['pdf', 'docx', 'txt'], accept_multiple_files=True)
+uploaded_files = st.file_uploader("Upload documents here:", type=['pdf', 'docx', 'txt'], accept_multiple_files=True)
 
 # Button to trigger the file processing
 if st.button('Process and Upload Files'):
