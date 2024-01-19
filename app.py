@@ -11,8 +11,10 @@ repo_name = "OAT_Policies"
 g = Github(st.secrets["GITHUB_TOKEN"])
 OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
 
-# Set OpenAI LLM with the API key
-llm_chat = ChatOpenAI(temperature=0.9, model='gpt-4-1106-preview', client=OPENAI_API_KEY)
+
+# Set OpenAI LLM and embeddings
+llm_chat = ChatOpenAI(temperature=0.9,
+                      model='gpt-4-1106-preview', client='')
 
 def upload_file_to_github(repo_name, file_path, file_content, commit_message):
     repo = g.get_user().get_repo(repo_name)
