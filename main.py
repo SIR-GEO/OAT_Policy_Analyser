@@ -20,7 +20,8 @@ st.markdown('Drag and drop your PDF files here to index them in Pinecone.')
 ensure_pinecone_index()
 
 # File uploader allows user to add their own PDF
-uploaded_files = st.file_uploader("Upload PDF files", type=['pdf'], accept_multiple_files=True)
+# main.py
+uploaded_files = st.file_uploader("Upload PDF, DOCX, TXT files", type=['pdf', 'docx', 'txt'], accept_multiple_files=True)
 
 if uploaded_files:
     # Save the PDFs to temporary files and collect their paths
