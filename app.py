@@ -113,6 +113,9 @@ if 'upload_time' in st.session_state and time.time() - st.session_state.upload_t
     st.experimental_rerun()
 
 
+# Initialize a list to hold the conversation history
+conversation_history = []
+
 st.title('Search Documents')
 search_query = st.text_input('Enter your search query:')
 
@@ -131,10 +134,12 @@ if search_query:
     start_time = time.time()
 
     try:
-        search_response = client.chat.completions.create(
-            model="gpt-4-1106-preview",
-            temperature=0.6,
-            stream = True,
+        
+        # Add the user's question to the conversation history
+        conversation_history.append({"role": "user", "content": search_query})
+
+        # If this is the first question, include the system message
+        if len(conversation_history) == 1:
             messages=[
                 {"role": "system", "content": """You are a UK based professional analyst called OAT Docs Analyser assistant.
                 You always respond using UK spelling and grammar. You will be given extensive details on OAT Policies and 
@@ -144,18 +149,26 @@ if search_query:
                 each document source will be given in the format **Document Source: (insert content filename here)**. 
                 You must always answer the user's questions using all the information in documents given:""" + all_file_contents + "Today's date and time will given next, use that information to relate contextually relevant user questions " + current_date_and_time},
                 {"role": "user", "content": search_query}
-            ]
+            ] + conversation_history  # Include the conversation history in the messages
+        else:
+            # If this is a follow-up question, only include the conversation history
+            messages = conversation_history
+
+        search_response = client.chat.completions.create(
+            model="gpt-4-1106-preview",
+            temperature=0.5,
+            stream = True,
+            messages=messages
         )
 
         # Placeholder for streaming responses
         response_placeholder = st.empty()
 
-                # Initialize an empty string to hold the response
+        # Initialize an empty string to hold the response
         full_response = ""
 
         # Start time when the search begins
         start_time = time.time()
-
 
         # Iterate over the stream and update the placeholder
         for chunk in search_response:
@@ -172,8 +185,12 @@ if search_query:
                 run_time = time.time() - start_time
                 tokens_per_sec = total_tokens / run_time if run_time > 0 else 0
 
+        # Add the model's response to the conversation history
+        conversation_history.append({"role": "assistant", "content": full_response})
+
     except Exception as e:
         st.error(f"An error occurred: {e}")
+
 
 
 # At the end of Streamlit app, custom css to display the footer stuff
