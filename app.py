@@ -159,7 +159,7 @@ if search_query:
             model="gpt-4-1106-preview",
             temperature=0.5,
             stream = True,
-            messages= ["You must answer the query:" + search_query + "using the information provided in a previous question and answer:" + messages]
+            messages= "You must answer the query:" + search_query + "using the information provided in a previous question and answer:" + messages
         )
 
         # Placeholder for streaming responses
