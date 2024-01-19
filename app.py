@@ -73,9 +73,9 @@ def get_all_file_contents_from_repo(repo_name):
     contents = repo.get_contents("")
     all_file_contents = ""
     for content_file in contents:
+        print(f"Found file in repo: {content_file.path}")  # Debug print
         if content_file.path.endswith(('.pdf', '.docx')):
             file_content = repo.get_contents(content_file.path).decoded_content
-            # Assuming you have a function to convert PDF and DOCX to text
             text_content = convert_to_text(file_content, content_file.path)
             if text_content is not None:
                 all_file_contents += text_content + "\n\n"
@@ -103,10 +103,10 @@ search_query = st.text_input("Enter your search query:")
 if search_query:
     # Fetch all file contents from the repo
     all_file_contents = get_all_file_contents_from_repo(repo_name)
-    
+
         # Print the all_file_contents for debugging purposes
-    print(all_file_contents)
-    
+    print("All file contents:", all_file_contents)  # Debug print
+  
     try:
         search_response = client.chat.completions.create(
             model="gpt-3.5-turbo-16k",
