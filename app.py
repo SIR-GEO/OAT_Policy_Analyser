@@ -75,27 +75,43 @@ footer_placeholder = st.empty()
 # Streamlit file uploader
 uploaded_files = st.file_uploader("Upload Documents", type=['pdf', 'docx', 'txt'], accept_multiple_files=True)
 
-# Process each uploaded file and upload the text content to GitHub
-if uploaded_files:
-    for uploaded_file in uploaded_files:
-        # Read the file content into memory
-        file_content = uploaded_file.read()
+# Button to trigger the file processing
+if st.button('Process and Upload Files'):
+    if uploaded_files:
+         # Store the current time in session state when the files are uploaded
+        st.session_state.upload_time = time.time()
 
-        # Check the file extension and process accordingly
-        _, file_extension = os.path.splitext(uploaded_file.name)
-        if file_extension.lower() == '.txt':
-            # For .txt files, upload the content directly
-            text_file_name = uploaded_file.name
-            upload_file_to_github(repo_name, text_file_name, file_content.decode('utf-8'), "Upload .txt file")
-        else:
-            # For other file types, convert to text and then upload
-            text_content = process_document(uploaded_file.name, file_content)
-            if text_content:
-                # Create a text file name by replacing the original extension with .txt
-                text_file_name = os.path.splitext(uploaded_file.name)[0] + '.txt'
-                upload_file_to_github(repo_name, text_file_name, text_content, "Upload processed text file")
+        for uploaded_file in uploaded_files:
+            # Read the file content into memory
+            file_content = uploaded_file.read()
+
+            # Check the file extension and process accordingly
+            _, file_extension = os.path.splitext(uploaded_file.name)
+            if file_extension.lower() == '.txt':
+                # For .txt files, upload the content directly
+                text_file_name = uploaded_file.name
+                upload_file_to_github(repo_name, text_file_name, file_content.decode('utf-8'), "Upload .txt file")
             else:
-                st.error(f'Failed to process the file: {uploaded_file.name}')
+                # For other file types, convert to text and then upload
+                text_content = process_document(uploaded_file.name, file_content)
+                if text_content:
+                    # Create a text file name by replacing the original extension with .txt
+                    text_file_name = os.path.splitext(uploaded_file.name)[0] + '.txt'
+                    upload_file_to_github(repo_name, text_file_name, text_content, "Upload processed text file")
+                else:
+                    st.error(f'Failed to process the file: {uploaded_file.name}')
+
+        # Clear the file uploader widget after processing
+        uploaded_files = None
+# Check if 'upload_time' is set in session_state and 4 seconds have passed
+if 'upload_time' in st.session_state and time.time() - st.session_state.upload_time > 4:
+    # Clear the uploaded files after 4 seconds
+    uploaded_files = None
+    # Remove 'upload_time' from session_state
+    del st.session_state.upload_time
+    # Rerun the app to clear the file uploader widget
+    st.experimental_rerun()
+
 
 st.title('Search Documents')
 search_query = st.text_input('Enter your search query:')
