@@ -1,7 +1,5 @@
 import os
 import streamlit as st
-# from config import OPENAI_API_KEY, PINECONE_API_KEY, PINECONE_API_ENVIRONMENT
-from constants import PINECONE_INDEX_NAME
 from langchain_openai import ChatOpenAI
 from langchain_community.vectorstores import Pinecone
 from langchain_openai import OpenAIEmbeddings

@@ -1,1 +1,0 @@
-PINECONE_INDEX_NAME = 'oat'
