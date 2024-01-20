@@ -146,6 +146,42 @@ if 'upload_time' in st.session_state and time.time() - st.session_state.upload_t
     st.experimental_rerun()
 
 
+def get_selected_file_contents_from_repo(repo_name, selected_files):
+    try:
+        repo = g.get_user().get_repo(repo_name)
+        all_file_contents = []
+        for file_name in selected_files:
+            content_file = repo.get_contents(file_name)
+            if content_file.type == "file":
+                file_content = content_file.decoded_content.decode().strip()
+                # Include the filename as metadata
+                document_with_metadata = f"### Document Source: {file_name}\n{file_content}\n"
+                all_file_contents.append(document_with_metadata)
+        return "\n".join(all_file_contents)
+    except Exception as e:
+        logging.error(f"Failed to get selected file contents from repo: {e}")
+        return ""  # Return an empty string in case of failure
+
+def get_all_files_from_repo(repo_name):
+    try:
+        repo = g.get_user().get_repo(repo_name)
+        contents = repo.get_contents("")
+        all_files = [content_file.name for content_file in contents if content_file.type == "file"]
+        return all_files
+    except Exception as e:
+        logging.error(f"Failed to get file list from repo: {e}")
+        return []  # Return an empty list in case of failure
+
+# Fetch all files from the repo
+all_files = get_all_files_from_repo(repo_name)
+
+# Use st.multiselect to let the user select files
+selected_files = st.multiselect('Select the files you want to use:', all_files)
+
+# Fetch the contents of the selected files
+all_file_contents = get_selected_file_contents_from_repo(repo_name, selected_files)
+
+
 
 # Streamlit search input and button
 st.subheader('Search Documents')
@@ -166,10 +202,6 @@ current_date_and_time = get_current_date_and_time()
 full_response_str = ""
 
 if search_query:
-    # Fetch all file contents from the repo
-    all_file_contents = get_all_file_contents_from_repo(repo_name)
-    if all_file_contents is None:
-        all_file_contents = ""  # Ensure it's a string even if no contents are found
 
     current_date_and_time = get_current_date_and_time()
     if current_date_and_time is None:
