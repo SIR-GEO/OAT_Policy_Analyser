@@ -1,7 +1,5 @@
 # embedding_docs.py
 import os
-from PyPDF2 import PdfReader
-from docx import Document
 import tempfile
 from langchain_community.document_loaders import UnstructuredPDFLoader
 from langchain_community.document_loaders.word_document import Docx2txtLoader

@@ -3,6 +3,7 @@ from github import Github
 import openai
 import time
 import logging
+import pandas as pd
 import os
 from embedding_docs import process_document
 from streamlit.components.v1 import html
@@ -13,6 +14,9 @@ client = OpenAI()
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
 
+# At the top of your Streamlit app, after imports
+if 'ai_responses_df' not in st.session_state:
+    st.session_state.ai_responses_df = pd.DataFrame(columns=["Response"])
 
 # Initialize OpenAI and GitHub clients with your tokens
 g = Github(st.secrets["GITHUB_TOKEN"])
@@ -20,9 +24,11 @@ openai.api_key = st.secrets["OPENAI_API_KEY"]
 
 repo_name = "OAT_Policies"
 
-# Create a container for the AI responses
-ai_responses_container = st.container()
+# Initialize a list to store the responses as dictionaries
+ai_responses = []
 
+# Initialize a DataFrame to store the full responses
+ai_responses_df = pd.DataFrame(columns=["Response"])
 
 
 def get_current_date_and_time():
@@ -128,8 +134,9 @@ if 'upload_time' in st.session_state and time.time() - st.session_state.upload_t
 # Initialize a list to hold the conversation history
 conversation_history = []
 
-st.title('Search Documents')
-search_query = st.text_input('Enter your search query:')
+# Streamlit search input and button
+st.subheader('Search Documents')
+search_query = st.text_input('Enter your search query:', key="search_query")
 
 # Reserve space for the metrics at the bottom of the app
 footer_tokens_per_sec = st.empty()
@@ -138,19 +145,8 @@ footer_run_time = st.empty()
 
 current_date_and_time = get_current_date_and_time()
 
-first_search_response = None
 
-# Create a list to hold the containers for the AI responses
-ai_responses_containers = []
-
-
-# Before accessing st.session_state.uploaded_file_name, ensure it's initialized
-if 'uploaded_file_name' not in st.session_state:
-    st.session_state.uploaded_file_name = "No file uploaded"
-
-# Now you can safely write it to the app
-st.write(st.session_state.uploaded_file_name)
-
+full_response_str = ""
 
 if search_query:
     # Fetch all file contents from the repo
@@ -189,11 +185,16 @@ if search_query:
                 You must always answer the user's questions using all the information in documents given:""" + all_file_contents + "Today's date and time will given next, use that information to relate contextually relevant user questions " + current_date_and_time},
                 {"role": "user", "content": search_query}
             ] + conversation_history  # Include the conversation history in the messages
+                        # If this is a follow-up question, only include the conversation history
+            st.write("helpppppppppppppppppppppppppppppppppp1" + full_response_str)
         else:
             # If this is a follow-up question, only include the conversation history
+            st.write("helpppppppppppppppppppppppppppppppppp2" + full_response_str)
             messages = [
-                {"role": "user", "content": "You must answer the query:" + search_query + "using the information provided in a previous answer:" + first_search_response + "and the database information" + conversation_history}
-            ]
+                {"role": "system", "content": "Using the information provided in a previous answer as context:" + full_response_str},
+                {"role": "user", "content": search_query}
+                ]
+        
         # Separate AI API call for handling user follow up questions, reduces massive user of tokens.
         search_response = client.chat.completions.create(
             model="gpt-4-1106-preview",
@@ -211,10 +212,8 @@ if search_query:
         # Start time when the search begins
         start_time = time.time()
 
-        # Iterate over the stream and update the placeholder
         for chunk in search_response:
             if chunk.choices[0].delta.content is not None:
-
                 # Append new content to the full response
                 full_response += chunk.choices[0].delta.content
 
@@ -225,25 +224,41 @@ if search_query:
                 total_tokens += len(chunk.choices[0].delta.content.split())
                 run_time = time.time() - start_time
                 tokens_per_sec = total_tokens / run_time if run_time > 0 else 0
-                        # Add the new AI response to the top of the container#
 
+        # Update full_response_str with the content of full_response
+        full_response_str = full_response
 
-        # Check if the response has already been displayed
-        if 'last_full_response' not in st.session_state:
-            st.session_state.last_full_response = ""
+        # Create a new row with the AI response
+        new_response = {"Response": full_response_str}
 
-        if full_response and full_response != st.session_state.last_full_response:
-            # Display the response
-            st.write(full_response)
-            # Update the last full response
-            st.session_state.last_full_response = full_response
+ 
+        new_response_df = pd.DataFrame({'Response': [full_response_str]})
+        st.session_state.ai_responses_df = pd.concat([st.session_state.ai_responses_df, new_response_df], ignore_index=True)
 
-            # Add the model's response to the conversation history
-            st.session_state.conversation_history.append({"role": "assistant", "content": full_response})
+        # To display the DataFrame
+        st.table(st.session_state.ai_responses_df)
+
+        # Add the model's response to the conversation history
+        conversation_history.append({"role": "assistant", "content": full_response})
 
 
     except Exception as e:
         st.error(f"An error occurred: {e}")
+# If this is a follow-up question, only include the conversation history
+st.write("helpppppppppppppppppppppppppppppppppp3" + full_response_str)
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
