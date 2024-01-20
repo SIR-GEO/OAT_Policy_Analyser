@@ -30,6 +30,10 @@ if 'total_tokens' not in st.session_state:
 if 'conversation_history' not in st.session_state:
     st.session_state.conversation_history = []
 
+# At the top of your Streamlit app, after imports
+if 'message_time' not in st.session_state:
+    st.session_state.message_time = {}
+
 
 
 
@@ -54,6 +58,27 @@ def get_current_date_and_time():
     except Exception as e:
         logging.error(f"Failed to get current date and time: {e}")
         return ""  # Return an empty string in case of failure
+
+# Define a function to display temporary messages in the sidebar
+def show_temporary_message(message_type, message, key):
+    if message_type == 'success':
+        message_container = st.sidebar.success(message, key=key)
+    elif message_type == 'warning':
+        message_container = st.sidebar.warning(message, key=key)
+    elif message_type == 'error':
+        message_container = st.sidebar.error(message, key=key)
+    
+    # Set a timer for the message
+    if key not in st.session_state:
+        st.session_state[key] = time.time()
+
+    # Check if 5 seconds have passed
+    if time.time() - st.session_state[key] > 5:
+        # Clear the specific message after 5 seconds
+        message_container.empty()
+        # Remove the timer from the session state
+        del st.session_state[key]
+
 
 def upload_file_to_github(repo_name, file_path, file_content, commit_message):
     repo = g.get_user().get_repo(repo_name)
@@ -105,45 +130,52 @@ footer_tokens_per_sec = 0  # Initialize tokens_per_sec here
 run_time = 0  # Initialize run_time here
 conversation_history_str = ""
 
-# Streamlit file uploader
-uploaded_files = st.file_uploader("Upload documents here:", type=['pdf', 'docx', 'txt'], accept_multiple_files=True)
+# Streamlit file uploader in the sidebar
+uploaded_files = st.sidebar.file_uploader("Upload documents here:", type=['pdf', 'docx', 'txt'], accept_multiple_files=True)
 
-# Button to trigger the file processing
-if st.button('Process and Upload Files'):
+# Button to trigger the file processing in the sidebar
+if st.sidebar.button('Process and Upload Files'):
     if uploaded_files:
-         # Store the current time in session state when the files are uploaded
-        st.session_state.upload_time = time.time()
-
         for uploaded_file in uploaded_files:
-            # Read the file content into memory
-            file_content = uploaded_file.read()
-
-            # Check the file extension and process accordingly
-            _, file_extension = os.path.splitext(uploaded_file.name)
-            if file_extension.lower() == '.txt':
-                # For .txt files, upload the content directly
-                text_file_name = uploaded_file.name
-                upload_file_to_github(repo_name, text_file_name, file_content.decode('utf-8'), "Upload .txt file")
+            # Check if the file already exists to avoid duplicates
+            text_file_name = os.path.splitext(uploaded_file.name)[0] + '.txt'
+            if text_file_name in st.session_state.selected_files:
+                st.sidebar.warning(f'File "{text_file_name}" already exists. No action taken to avoid duplication.')
+                st.session_state.message_time[text_file_name] = time.time()
+            
             else:
-                # For other file types, convert to text and then upload
-                text_content = process_document(uploaded_file.name, file_content)
-                if text_content:
-                    # Create a text file name by replacing the original extension with .txt
-                    text_file_name = os.path.splitext(uploaded_file.name)[0] + '.txt'
-                    upload_file_to_github(repo_name, text_file_name, text_content, "Upload processed text file")
+                # Read the file content into memory
+                file_content = uploaded_file.read()
+
+                # Check the file extension and process accordingly
+                _, file_extension = os.path.splitext(uploaded_file.name)
+                if file_extension.lower() == '.txt':
+                    # For .txt files, upload the content directly
+                    upload_file_to_github(repo_name, text_file_name, file_content.decode('utf-8'), "Upload .txt file")
+                    st.sidebar.success(f'File "{text_file_name}" created successfully!')
+                    st.session_state.message_time[text_file_name] = time.time()
+
                 else:
-                    st.error(f'Failed to process the file: {uploaded_file.name}')
+                    # For other file types, convert to text and then upload
+                    text_content = process_document(uploaded_file.name, file_content)
+                    if text_content:
+                        upload_file_to_github(repo_name, text_file_name, text_content, "Upload processed text file")
+                        st.sidebar.success(f'File "{text_file_name}" created successfully!')
+                    else:
+                        st.sidebar.error(f'Failed to process the file: {uploaded_file.name}')
+                
+                # Add the uploaded file to the selected_files dictionary
+                st.session_state.selected_files[text_file_name] = False
 
         # Clear the file uploader widget after processing
         uploaded_files = None
-# Check if 'upload_time' is set in session_state and 4 seconds have passed
-if 'upload_time' in st.session_state and time.time() - st.session_state.upload_time > 4:
-    # Clear the uploaded files after 4 seconds
-    uploaded_files = None
-    # Remove 'upload_time' from session_state
-    del st.session_state.upload_time
-    # Rerun the app to clear the file uploader widget
-    st.experimental_rerun()
+# Outside of the button click event, check if 5 seconds have passed for each message
+for file_name, timestamp in list(st.session_state.message_time.items()):
+    if time.time() - timestamp > 5:
+        # 5 seconds have passed, clear the message
+        st.sidebar.empty()
+        # Remove the timestamp from the session state
+        del st.session_state.message_time[file_name]
 
 
 def get_selected_file_contents_from_repo(repo_name, selected_files):
@@ -172,6 +204,7 @@ def get_all_files_from_repo(repo_name):
         logging.error(f"Failed to get file list from repo: {e}")
         return []  # Return an empty list in case of failure
 
+
 # Fetch all files from the repo
 all_files = get_all_files_from_repo(repo_name)
 
@@ -192,9 +225,8 @@ all_file_contents = get_selected_file_contents_from_repo(repo_name, selected_fil
 
 
 
-
 # Streamlit search input and button
-st.subheader('Search Documents')
+# st.subheader('Search Documents')
 search_query = st.text_input('Enter your search query:', key="search_query")
 
 # Create a placeholder for the footer
@@ -400,3 +432,10 @@ if __name__ == "__main__":
         st.components.v1.html(footer_html_content, height=0, scrolling=False)
     else:
         footer_placeholder.empty()  # Clear the placeholder if footer_html_content is empty
+
+
+
+# Outside of the button click event, check if 5 seconds have passed for each message
+for key in list(st.session_state.keys()):
+    if key.startswith('success_') or key.startswith('warning_'):
+        show_temporary_message(None, None, key)  # This will check and clear the message if 5 seconds have passed
