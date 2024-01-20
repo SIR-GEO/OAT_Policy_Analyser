@@ -100,8 +100,6 @@ tokens_per_sec = 0
 footer_tokens_per_sec = 0  # Initialize tokens_per_sec here
 run_time = 0  # Initialize run_time here
 
-# Create a placeholder for the footer
-footer_placeholder = st.empty()
 
 # Streamlit file uploader
 uploaded_files = st.file_uploader("Upload documents here:", type=['pdf', 'docx', 'txt'], accept_multiple_files=True)
@@ -150,6 +148,10 @@ conversation_history = []
 # Streamlit search input and button
 st.subheader('Search Documents')
 search_query = st.text_input('Enter your search query:', key="search_query")
+
+# Create a placeholder for the footer
+footer_placeholder = st.empty()
+footer_placeholder.markdown("") 
 
 # Reserve space for the metrics at the bottom of the app
 footer_tokens_per_sec = st.empty()
@@ -218,6 +220,7 @@ if search_query:
 
         # Placeholder for streaming responses
         response_placeholder = st.empty()
+
 
         # Initialize an empty string to hold the response
         full_response = ""
@@ -302,6 +305,11 @@ if search_query:
 
 # At the end of Streamlit app, custom css to display the footer stuff
 def render_footer(tokens_per_sec, total_tokens, run_time, cumulative_cost):
+    # Check if any of the values are None and return an empty string if so
+    if tokens_per_sec is None or total_tokens is None or run_time is None or cumulative_cost is None:
+        return ""
+    
+    # Construct the footer HTML
     footer_html = f"""
     <style>
     .reportview-container .main footer {{
@@ -321,18 +329,22 @@ def render_footer(tokens_per_sec, total_tokens, run_time, cumulative_cost):
     </style>
     <footer class="footer">
         <span>Tokens / sec: {tokens_per_sec:.2f}</span>
-        <span style="margin-left: 30px;">Total tokens: {st.session_state.total_tokens}</span>
+        <span style="margin-left: 30px;">Total tokens: {total_tokens}</span>
         <span style="margin-left: 30px;">Run time: {run_time:.2f} seconds</span>
         <span style="margin-left: 30px;">Predicted cost: ${cumulative_cost:.6f}</span>
     </footer>
     """
-    st.markdown(footer_html, unsafe_allow_html=True)
-    # Use the `html` function to render the custom HTML for the sticky footer
-    st.components.v1.html(footer_html, height=0, scrolling=False)
+    return footer_html
 
 # Ensure that the footer is rendered after all other components
 if __name__ == "__main__":
     # ... (rest of your Streamlit app logic) ...
 
     # At the end of your Streamlit app, update the footer in the placeholder
-    footer_placeholder.markdown(render_footer(tokens_per_sec, st.session_state.total_tokens, run_time, st.session_state.cumulative_cost))
+    footer_html_content = render_footer(tokens_per_sec, st.session_state.total_tokens, run_time, st.session_state.cumulative_cost)
+    if footer_html_content:
+        footer_placeholder = st.empty()
+        footer_placeholder.markdown(footer_html_content, unsafe_allow_html=True)
+        st.components.v1.html(footer_html_content, height=0, scrolling=False)
+    else:
+        footer_placeholder.empty()  # Clear the placeholder if footer_html_content is empty
