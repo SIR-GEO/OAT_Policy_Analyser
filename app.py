@@ -186,10 +186,10 @@ if search_query:
                 {"role": "user", "content": search_query}
             ] + conversation_history  # Include the conversation history in the messages
                         # If this is a follow-up question, only include the conversation history
-            st.write("helpppppppppppppppppppppppppppppppppp1" + full_response_str)
+            #st.write("helpppppppppppppppppppppppppppppppppp1" + full_response_str)
         else:
             # If this is a follow-up question, only include the conversation history
-            st.write("helpppppppppppppppppppppppppppppppppp2" + full_response_str)
+            #st.write("helpppppppppppppppppppppppppppppppppp2" + full_response_str)
             messages = [
                 {"role": "system", "content": "Using the information provided in a previous answer as context:" + full_response_str},
                 {"role": "user", "content": search_query}
@@ -245,7 +245,7 @@ if search_query:
     except Exception as e:
         st.error(f"An error occurred: {e}")
 # If this is a follow-up question, only include the conversation history
-st.write("helpppppppppppppppppppppppppppppppppp3" + full_response_str)
+#st.write("helpppppppppppppppppppppppppppppppppp3" + full_response_str)
 
 
 
