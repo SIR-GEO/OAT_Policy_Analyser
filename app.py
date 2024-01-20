@@ -175,12 +175,11 @@ def get_all_files_from_repo(repo_name):
 # Fetch all files from the repo
 all_files = get_all_files_from_repo(repo_name)
 
-# Use st.multiselect to let the user select files
-selected_files = st.multiselect('Select the files you want to use:', all_files)
+# Use st.sidebar.multiselect to let the user select files in the sidebar
+selected_files = st.sidebar.multiselect('Select the files you want to use:', all_files)
 
 # Fetch the contents of the selected files
 all_file_contents = get_selected_file_contents_from_repo(repo_name, selected_files)
-
 
 
 # Streamlit search input and button
