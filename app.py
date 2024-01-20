@@ -175,11 +175,22 @@ def get_all_files_from_repo(repo_name):
 # Fetch all files from the repo
 all_files = get_all_files_from_repo(repo_name)
 
-# Use st.sidebar.multiselect to let the user select files in the sidebar
-selected_files = st.sidebar.multiselect('Select the files you want to use:', all_files)
+# Create a dictionary in the session state to store the selection status of each file
+if 'selected_files' not in st.session_state:
+    st.session_state.selected_files = {file: False for file in all_files}
+
+# Create a checkbox for each file in the sidebar
+for file in all_files:
+    st.session_state.selected_files[file] = st.sidebar.checkbox(f'Select {file}', value=st.session_state.selected_files[file])
+
+# Get the list of selected files
+selected_files = [file for file, selected in st.session_state.selected_files.items() if selected]
 
 # Fetch the contents of the selected files
 all_file_contents = get_selected_file_contents_from_repo(repo_name, selected_files)
+
+
+
 
 
 # Streamlit search input and button
