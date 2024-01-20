@@ -16,7 +16,8 @@ logging.basicConfig(level=logging.DEBUG)
 
 # At the top of your Streamlit app, after imports
 if 'ai_responses_df' not in st.session_state:
-    st.session_state.ai_responses_df = pd.DataFrame(columns=["Response"])
+    st.session_state.ai_responses_df = pd.DataFrame(columns=["Query", "AI Response"])
+
 
 # Initialize OpenAI and GitHub clients with your tokens
 g = Github(st.secrets["GITHUB_TOKEN"])
@@ -231,9 +232,18 @@ if search_query:
         # Create a new row with the AI response
         new_response = {"Response": full_response_str}
 
+                # Where you have the new response in full_response_str and the user's query in search_query
+        new_response_df = pd.DataFrame({
+            'Query': [search_query],  # Add the user's query
+            'AI Response': [full_response_str]
+        })
+
  
-        new_response_df = pd.DataFrame({'Response': [full_response_str]})
+        # Concatenate the new DataFrame with the existing one in the session state
         st.session_state.ai_responses_df = pd.concat([st.session_state.ai_responses_df, new_response_df], ignore_index=True)
+
+        # Sort the DataFrame by index in ascending order
+        st.session_state.ai_responses_df = st.session_state.ai_responses_df.sort_index(ascending=False)
 
         # To display the DataFrame
         st.table(st.session_state.ai_responses_df)
