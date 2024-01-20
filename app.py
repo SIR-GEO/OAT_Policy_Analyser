@@ -26,6 +26,10 @@ if 'cumulative_cost' not in st.session_state:
 if 'total_tokens' not in st.session_state:
     st.session_state.total_tokens = 0
 
+# At the top of your Streamlit app, after imports
+if 'conversation_history' not in st.session_state:
+    st.session_state.conversation_history = []
+
 
 
 
@@ -99,7 +103,7 @@ total_tokens = 0
 tokens_per_sec = 0
 footer_tokens_per_sec = 0  # Initialize tokens_per_sec here
 run_time = 0  # Initialize run_time here
-
+conversation_history_str = ""
 
 # Streamlit file uploader
 uploaded_files = st.file_uploader("Upload documents here:", type=['pdf', 'docx', 'txt'], accept_multiple_files=True)
@@ -142,8 +146,6 @@ if 'upload_time' in st.session_state and time.time() - st.session_state.upload_t
     st.experimental_rerun()
 
 
-# Initialize a list to hold the conversation history
-conversation_history = []
 
 # Streamlit search input and button
 st.subheader('Search Documents')
@@ -199,16 +201,20 @@ if search_query:
                 each document source will be given in the format **Document Source: (insert content filename here)**. 
                 You must always answer the user's questions using all the information in documents given:""" + all_file_contents + "Today's date and time will given next, use that information to relate contextually relevant user questions " + current_date_and_time},
                 {"role": "user", "content": search_query}
-            ] + conversation_history  # Include the conversation history in the messages
-                        # If this is a follow-up question, only include the conversation history
-            #st.write("helpppppppppppppppppppppppppppppppppp1" + full_response_str)
+            ]
+
         else:
-            # If this is a follow-up question, only include the conversation history
-            #st.write("helpppppppppppppppppppppppppppppppppp2" + full_response_str)
+            # If this is a follow-up question
             messages = [
-                {"role": "system", "content": "Using the information provided in a previous answer as context:" + full_response_str},
+                {"role": "system", "content": """You are a UK based professional analyst called OAT Docs Analyser assistant.
+                You always respond using UK spelling and grammar. You will be given extensive details on OAT Policies and 
+                OAT documents and will be able to cross-reference entire contents or analyse specific sections in order to answer any question given.
+                You must say if the information does not have enough detail, you must NOT make up facts or lie. 
+                At the end of any response, you must always source every single document source information you used in your response, 
+                each document source will be given in the format **Document Source: (insert content filename here)**. 
+                You must always answer the user's questions using all the information in documents given:""" + all_file_contents + "Today's date and time will given next, use that information to relate contextually relevant user questions " + current_date_and_time},
                 {"role": "user", "content": search_query}
-                ]
+                ] + st.session_state.conversation_history
         
         # Separate AI API call for handling user follow up questions, reduces massive user of tokens.
         search_response = client.chat.completions.create(
@@ -280,8 +286,15 @@ if search_query:
         st.table(st.session_state.ai_responses_df)
 
         # Add the model's response to the conversation history
-        conversation_history.append({"role": "assistant", "content": full_response})
+        st.session_state.conversation_history.append({"role": "assistant", "content": full_response})
 
+        # Convert conversation_history to a string
+        conversation_history_str = str(st.session_state.conversation_history)
+        st.write("conversation_history_str :    " + conversation_history_str)
+        #st.write("full_response_str   " + full_response_str)
+        #st.write("full_response       " + full_response)
+        #st.write("new_response_df     " + new_response_df)
+        #st.write("new_response_df :    " + ai_responses_df)
 
     except Exception as e:
         st.error(f"An error occurred: {e}")
