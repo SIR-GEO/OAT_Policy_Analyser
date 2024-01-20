@@ -290,11 +290,8 @@ if search_query:
 
         # Convert conversation_history to a string
         conversation_history_str = str(st.session_state.conversation_history)
-        st.write("conversation_history_str :    " + conversation_history_str)
-        #st.write("full_response_str   " + full_response_str)
-        #st.write("full_response       " + full_response)
-        #st.write("new_response_df     " + new_response_df)
-        #st.write("new_response_df :    " + ai_responses_df)
+        #st.write("conversation_history_str :    " + conversation_history_str)
+
 
     except Exception as e:
         st.error(f"An error occurred: {e}")
