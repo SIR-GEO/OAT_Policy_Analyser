@@ -13,6 +13,7 @@ client = OpenAI()
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
 
+
 # Initialize OpenAI and GitHub clients with your tokens
 g = Github(st.secrets["GITHUB_TOKEN"])
 openai.api_key = st.secrets["OPENAI_API_KEY"]
@@ -22,9 +23,14 @@ repo_name = "OAT_Policies"
 # Create a container for the AI responses
 ai_responses_container = st.container()
 
-def get_current_date_and_time():
-    return datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Returns date and time in 'YYYY-MM-DD HH:MM:SS' format
 
+
+def get_current_date_and_time():
+    try:
+        return datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Returns date and time in 'YYYY-MM-DD HH:MM:SS' format
+    except Exception as e:
+        logging.error(f"Failed to get current date and time: {e}")
+        return ""  # Return an empty string in case of failure
 
 def upload_file_to_github(repo_name, file_path, file_content, commit_message):
     repo = g.get_user().get_repo(repo_name)
@@ -50,16 +56,20 @@ def upload_file_to_github(repo_name, file_path, file_content, commit_message):
         raise e
 
 def get_all_file_contents_from_repo(repo_name):
-    repo = g.get_user().get_repo(repo_name)
-    contents = repo.get_contents("")
-    all_file_contents = []
-    for content_file in contents:
-        if content_file.type == "file":
-            file_content = repo.get_contents(content_file.path).decoded_content.decode().strip()
-            # Include the filename as metadata
-            document_with_metadata = f"### Document Source: {content_file.name}\n{file_content}\n"
-            all_file_contents.append(document_with_metadata)
-    return "\n".join(all_file_contents)
+    try:
+        repo = g.get_user().get_repo(repo_name)
+        contents = repo.get_contents("")
+        all_file_contents = []
+        for content_file in contents:
+            if content_file.type == "file":
+                file_content = repo.get_contents(content_file.path).decoded_content.decode().strip()
+                # Include the filename as metadata
+                document_with_metadata = f"### Document Source: {content_file.name}\n{file_content}\n"
+                all_file_contents.append(document_with_metadata)
+        return "\n".join(all_file_contents)
+    except Exception as e:
+        logging.error(f"Failed to get file contents from repo: {e}")
+        return ""  # Return an empty string in case of failure
 
 # Set up the Streamlit interface
 st.title('OAT Policy Analyser')
@@ -130,20 +140,45 @@ current_date_and_time = get_current_date_and_time()
 
 first_search_response = None
 
+# Create a list to hold the containers for the AI responses
+ai_responses_containers = []
+
+
+# Before accessing st.session_state.uploaded_file_name, ensure it's initialized
+if 'uploaded_file_name' not in st.session_state:
+    st.session_state.uploaded_file_name = "No file uploaded"
+
+# Now you can safely write it to the app
+st.write(st.session_state.uploaded_file_name)
+
+
 if search_query:
     # Fetch all file contents from the repo
     all_file_contents = get_all_file_contents_from_repo(repo_name)
+    if all_file_contents is None:
+        all_file_contents = ""  # Ensure it's a string even if no contents are found
+
+    current_date_and_time = get_current_date_and_time()
+    if current_date_and_time is None:
+        current_date_and_time = ""  # Ensure it's a string even if the function fails
 
     # Start time when the search begins
     start_time = time.time()
 
+    # Ensure conversation_history is stored in session state
+    if 'conversation_history' not in st.session_state:
+        st.session_state.conversation_history = []
+
+
     try:
         
         # Add the user's question to the conversation history
-        conversation_history.append({"role": "user", "content": search_query})
+        if 'conversation_history' not in st.session_state:
+            st.session_state.conversation_history = []
+        st.session_state.conversation_history.append({"role": "user", "content": search_query})
 
         # If this is the first question, include the system message
-        if len(conversation_history) == 1:
+        if len(st.session_state.conversation_history) == 1:
             messages=[
                 {"role": "system", "content": """You are a UK based professional analyst called OAT Docs Analyser assistant.
                 You always respond using UK spelling and grammar. You will be given extensive details on OAT Policies and 
@@ -156,8 +191,9 @@ if search_query:
             ] + conversation_history  # Include the conversation history in the messages
         else:
             # If this is a follow-up question, only include the conversation history
-            messages = "You must answer the query:" + search_query + "using the information provided in a previous answer:" + first_search_response + "and the database information" + conversation_history
-
+            messages = [
+                {"role": "user", "content": "You must answer the query:" + search_query + "using the information provided in a previous answer:" + first_search_response + "and the database information" + conversation_history}
+            ]
         # Separate AI API call for handling user follow up questions, reduces massive user of tokens.
         search_response = client.chat.completions.create(
             model="gpt-4-1106-preview",
@@ -185,21 +221,26 @@ if search_query:
                 # Update the placeholder with the full response so far
                 response_placeholder.write(full_response)
 
-                # Add the new AI response to the top of the container
-                with ai_responses_container.container():
-                    st.write(full_response)
-
-                # If this is the first response, store it in first_search_response
-                if first_search_response is None:
-                    first_search_response = full_response
-
                 # Calculate and update tokens and run time
                 total_tokens += len(chunk.choices[0].delta.content.split())
                 run_time = time.time() - start_time
                 tokens_per_sec = total_tokens / run_time if run_time > 0 else 0
+                        # Add the new AI response to the top of the container#
 
-        # Add the model's response to the conversation history
-        conversation_history.append({"role": "assistant", "content": full_response})
+
+        # Check if the response has already been displayed
+        if 'last_full_response' not in st.session_state:
+            st.session_state.last_full_response = ""
+
+        if full_response and full_response != st.session_state.last_full_response:
+            # Display the response
+            st.write(full_response)
+            # Update the last full response
+            st.session_state.last_full_response = full_response
+
+            # Add the model's response to the conversation history
+            st.session_state.conversation_history.append({"role": "assistant", "content": full_response})
+
 
     except Exception as e:
         st.error(f"An error occurred: {e}")
