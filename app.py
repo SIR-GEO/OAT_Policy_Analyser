@@ -18,6 +18,18 @@ logging.basicConfig(level=logging.DEBUG)
 if 'ai_responses_df' not in st.session_state:
     st.session_state.ai_responses_df = pd.DataFrame(columns=["Query", "AI Response"])
 
+# Initialize the cumulative cost in session state if it doesn't exist
+if 'cumulative_cost' not in st.session_state:
+    st.session_state.cumulative_cost = 0.0
+
+# Initialize the total tokens in session state if it doesn't exist
+if 'total_tokens' not in st.session_state:
+    st.session_state.total_tokens = 0
+
+
+
+
+
 
 # Initialize OpenAI and GitHub clients with your tokens
 g = Github(st.secrets["GITHUB_TOKEN"])
@@ -226,6 +238,22 @@ if search_query:
                 run_time = time.time() - start_time
                 tokens_per_sec = total_tokens / run_time if run_time > 0 else 0
 
+
+
+
+        # Calculate the cost and tokens for the current response
+        input_cost_per_token = 0.01 / 1000  # Cost per token for input
+        output_cost_per_token = 0.03 / 1000  # Cost per token for output
+        current_cost = (total_tokens * (input_cost_per_token + output_cost_per_token))
+        current_total_tokens = total_tokens  # Store the total tokens for the current response
+
+        # Update the cumulative cost and total tokens in session state
+        st.session_state.cumulative_cost += current_cost
+        st.session_state.total_tokens += current_total_tokens
+
+
+
+
         # Update full_response_str with the content of full_response
         full_response_str = full_response
 
@@ -273,7 +301,7 @@ if search_query:
 
 
 # At the end of Streamlit app, custom css to display the footer stuff
-def render_footer(tokens_per_sec, total_tokens, run_time, predicted_cost):
+def render_footer(tokens_per_sec, total_tokens, run_time, cumulative_cost):
     footer_html = f"""
     <style>
     .reportview-container .main footer {{
@@ -293,9 +321,9 @@ def render_footer(tokens_per_sec, total_tokens, run_time, predicted_cost):
     </style>
     <footer class="footer">
         <span>Tokens / sec: {tokens_per_sec:.2f}</span>
-        <span style="margin-left: 30px;">Tokens: {total_tokens}</span>
+        <span style="margin-left: 30px;">Total tokens: {st.session_state.total_tokens}</span>
         <span style="margin-left: 30px;">Run time: {run_time:.2f} seconds</span>
-        <span style="margin-left: 30px;">Predicted cost: ${predicted_cost:.6f}</span>
+        <span style="margin-left: 30px;">Predicted cost: ${cumulative_cost:.6f}</span>
     </footer>
     """
     st.markdown(footer_html, unsafe_allow_html=True)
@@ -306,10 +334,5 @@ def render_footer(tokens_per_sec, total_tokens, run_time, predicted_cost):
 if __name__ == "__main__":
     # ... (rest of your Streamlit app logic) ...
 
-    # Calculate the predicted cost
-    input_cost_per_token = 0.01 / 1000  # Cost per token for input
-    output_cost_per_token = 0.03 / 1000  # Cost per token for output
-    predicted_cost = (total_tokens * (input_cost_per_token + output_cost_per_token))
-
     # At the end of your Streamlit app, update the footer in the placeholder
-    footer_placeholder.markdown(render_footer(tokens_per_sec, total_tokens, run_time, predicted_cost))
+    footer_placeholder.markdown(render_footer(tokens_per_sec, st.session_state.total_tokens, run_time, st.session_state.cumulative_cost))
