@@ -17,7 +17,7 @@ password = st.text_input("Enter the password", type="password")
 if password == st.secrets["general"]["password"]:
            
     # Set up logging
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
 
     # At the top of your Streamlit app, after imports
     if 'ai_responses_df' not in st.session_state:
