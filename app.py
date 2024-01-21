@@ -435,7 +435,12 @@ if password == st.secrets["general"]["password"]:
     full_response_str = ""
     # Define the function to process the query
     def process_query(query):
-        total_tokens = 0  # Define total_tokens at the start of the function
+        # Calculate the token count of the selected files
+        selected_files_token_count = sum(st.session_state.file_tokens.get(file, 0) for file, selected in st.session_state.selected_files.items() if selected)
+        
+        # Define total_tokens at the start of the function, including the selected files' tokens
+        total_tokens = selected_files_token_count  # Start with the tokens from the selected files
+        
         if search_query:
 
             current_date_and_time = get_current_date_and_time()
