@@ -479,8 +479,10 @@ if password == st.secrets["general"]["password"]:
                     You must always answer the user's questions using all the information in documents given:""" + all_file_contents + """Today's date and time will given next,
                     use that information to relate contextually relevant user questions """ + current_date_and_time},
                     {"role": "user", "content": search_query}
-                    ] + st.session_state.conversation_history
+                    ]
                 )
+                # add this line just after the ]  -   + st.session_state.conversation_history  - to put the follow up questions back in, so the model knows what has just been said and asked.
+
 
                 # Placeholder for streaming responses
                 response_placeholder = st.empty()
