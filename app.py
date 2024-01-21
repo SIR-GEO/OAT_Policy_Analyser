@@ -355,11 +355,11 @@ def process_query(query):
             # Concatenate the new DataFrame with the existing one in the session state
             st.session_state.ai_responses_df = pd.concat([st.session_state.ai_responses_df, new_response_df], ignore_index=True)
 
-            # Sort the DataFrame by index in ascending order
-            st.session_state.ai_responses_df = st.session_state.ai_responses_df.sort_index(ascending=False)
+            # Reverse the DataFrame order to display the most recent messages at the top
+            reversed_df = st.session_state.ai_responses_df.iloc[::-1]
 
-            # To display the DataFrame
-            st.table(st.session_state.ai_responses_df)
+            # Display the reversed DataFrame as a static table
+            st.table(reversed_df)
 
             # Add the model's response to the conversation history
             st.session_state.conversation_history.append({"role": "assistant", "content": full_response})
