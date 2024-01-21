@@ -38,6 +38,12 @@ if 'message_time' not in st.session_state:
 if 'search_query' not in st.session_state:
     st.session_state.search_query = ""
 
+# Create three columns with equal width to center the middle column content
+col1, col2, col3 = st.columns([1,1,1])
+
+# Use the middle column to display the image
+with col2:
+    st.image('images/oat-logo-2.png')
 
 # Set up the Streamlit interface
 st.markdown("<h1 style='text-align: center;'>OAT Policy Analyser</h1>", unsafe_allow_html=True)
