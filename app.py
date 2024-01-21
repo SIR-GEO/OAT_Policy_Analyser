@@ -6,7 +6,7 @@ import logging
 import pandas as pd
 import json
 import os
-from embedding_docs import process_document
+from embedding_docs import process_document, process_documents, process_txt, process_docx, process_pdf
 from streamlit.components.v1 import html
 from datetime import datetime
 from openai import OpenAI
