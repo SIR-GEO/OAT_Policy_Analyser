@@ -6,9 +6,9 @@ import logging
 import pandas as pd
 import json
 import os
-from embedding_docs import process_document, process_documents, process_txt, process_docx, process_pdf
+from embedding_docs import process_document 
 from streamlit.components.v1 import html
-from tiktoken import Tokenizer
+import tiktoken
 from datetime import datetime
 from openai import OpenAI
 client = OpenAI()
@@ -23,9 +23,11 @@ if password == st.secrets["general"]["password"]:
     # Clear the password input field
     password_placeholder.empty()
 
+    # Specify the encoding you want to use for the tokenizer
+    encoding = tiktoken.get_encoding("cl100k_base")
+
     # Set up logging
     logging.basicConfig(level=logging.INFO)
-    tokenizer = Tokenizer()
     # At the top of your Streamlit app, after imports
     if 'ai_responses_df' not in st.session_state:
         st.session_state.ai_responses_df = pd.DataFrame(columns=["Query", "AI Response"])
@@ -189,7 +191,8 @@ if password == st.secrets["general"]["password"]:
             st.sidebar.success(f'File "{file_path}" uploaded successfully!')
 
             # Calculate the number of tokens in the file
-            token_count = len(list(tokenizer.tokenize(file_content)))
+            token_integers = encoding.encode(file_content)
+            token_count = len(token_integers)
 
             # Store the token count in the session state
             if 'file_tokens' not in st.session_state:
@@ -203,6 +206,7 @@ if password == st.secrets["general"]["password"]:
             logging.error(f"An error occurred: {e}")
             st.sidebar.error(f'An error occurred while uploading the file "{file_path}".')
             raise e
+
 
     # Make sure to define the update_token_counts function as well
     def update_token_counts(repo, file_path, token_count):

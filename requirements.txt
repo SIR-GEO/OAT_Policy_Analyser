@@ -9,4 +9,4 @@ langchain-core==0.1.12
 langchain-openai==0.0.2.post1
 python-docx==0.8.10
 docx2txt==0.8
-tiktoken==2.26.0
+tiktoken==0.5.2
