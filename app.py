@@ -372,7 +372,7 @@ if password == st.secrets["general"]["password"]:
         st.session_state.file_tokens = {}
 
     # Create a checkbox for each file in the sidebar
-    MAX_TOKENS = 85000  # Maximum allowed tokens
+    MAX_TOKENS = 90000  # Maximum allowed tokens
 
     for file in all_files:
         # Skip the token_counts.json file
