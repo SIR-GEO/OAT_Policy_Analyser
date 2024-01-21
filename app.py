@@ -68,8 +68,6 @@ if password == st.secrets["general"]["password"]:
     temperature = st.slider('Creativity Slider | 0.0 = Highly Predictable | 1.0 = Super Creative', min_value=0.0, max_value=1.0, value=0.5, step=0.1, format='%.1f')
 
 
-    # At the top of your Streamlit app, after imports
-    # Define a form and a submit button
     with st.form(key='query_form'):
         # Create the text input widget inside the form
         search_query = st.text_input("Your Query", value=st.session_state.search_query, key="search_query")
