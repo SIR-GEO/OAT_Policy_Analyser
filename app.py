@@ -29,10 +29,30 @@ if 'total_tokens' not in st.session_state:
 # At the top of your Streamlit app, after imports
 if 'conversation_history' not in st.session_state:
     st.session_state.conversation_history = []
-
+#st.write("Initialized conversation_history:", st.session_state.conversation_history)
 # At the top of your Streamlit app, after imports
 if 'message_time' not in st.session_state:
     st.session_state.message_time = {}
+
+# At the top of your Streamlit app, after imports and before creating widgets
+if 'search_query' not in st.session_state:
+    st.session_state.search_query = ""
+
+# Set up the Streamlit interface
+st.title('OAT Policy Analyser')
+
+
+# At the top of your Streamlit app, after imports
+# Define a form and a submit button
+with st.form(key='query_form'):
+    # Create the text input widget inside the form
+    search_query = st.text_input("Your Query", value=st.session_state.search_query, key="search_query")
+    # Create the submit button
+    submitted = st.form_submit_button("Submit")
+
+
+
+
 
 
 
@@ -88,7 +108,7 @@ def upload_file_to_github(repo_name, file_path, file_content, commit_message):
         existing_files = [content_file.name for content_file in contents if content_file.type == "file"]
         
         if file_path in existing_files:
-            st.warning(f'File "{file_path}" already exists. No action taken to avoid duplication.')
+            st.sidebar.warning(f'File "{file_path}" already exists. No action taken to avoid duplication.')
             return  # Skip the upload to prevent duplication
 
         # Convert file_content to string if necessary
@@ -97,10 +117,10 @@ def upload_file_to_github(repo_name, file_path, file_content, commit_message):
 
         # Since the file does not exist, create it
         repo.create_file(file_path, commit_message, file_content)
-        st.success(f'File "{file_path}" created successfully!')
+        st.sidebar.success(f'File "{file_path}" created successfully!')
     except Exception as e:
         logging.error(f"An error occurred: {e}")
-        st.error(f'An error occurred while uploading the file "{file_path}".')
+        st.sidebar.error(f'An error occurred while uploading the file "{file_path}".')
         raise e
 
 def get_all_file_contents_from_repo(repo_name):
@@ -119,9 +139,6 @@ def get_all_file_contents_from_repo(repo_name):
         logging.error(f"Failed to get file contents from repo: {e}")
         return ""  # Return an empty string in case of failure
 
-# Set up the Streamlit interface
-st.title('OAT Policy Analyser')
-
 # Initialize metrics
 start_time = None
 total_tokens = 0
@@ -131,7 +148,7 @@ run_time = 0  # Initialize run_time here
 conversation_history_str = ""
 
 # Streamlit file uploader in the sidebar
-uploaded_files = st.sidebar.file_uploader("Upload documents here:", type=['pdf', 'docx', 'txt'], accept_multiple_files=True)
+uploaded_files = st.sidebar.file_uploader("", type=['pdf', 'docx', 'txt'], accept_multiple_files=True)
 
 # Button to trigger the file processing in the sidebar
 if st.sidebar.button('Process and Upload Files'):
@@ -225,10 +242,6 @@ all_file_contents = get_selected_file_contents_from_repo(repo_name, selected_fil
 
 
 
-# Streamlit search input and button
-# st.subheader('Search Documents')
-search_query = st.text_input('Enter your search query:', key="search_query")
-
 # Create a placeholder for the footer
 footer_placeholder = st.empty()
 footer_placeholder.markdown("") 
@@ -243,140 +256,137 @@ current_date_and_time = get_current_date_and_time()
 
 full_response_str = ""
 
-if search_query:
+# Define the function to process the query
+def process_query(query):
+    total_tokens = 0  # Define total_tokens at the start of the function
+    if search_query:
 
-    current_date_and_time = get_current_date_and_time()
-    if current_date_and_time is None:
-        current_date_and_time = ""  # Ensure it's a string even if the function fails
-
-    # Start time when the search begins
-    start_time = time.time()
-
-    # Ensure conversation_history is stored in session state
-    if 'conversation_history' not in st.session_state:
-        st.session_state.conversation_history = []
-
-
-    try:
-        
-        # Add the user's question to the conversation history
-        if 'conversation_history' not in st.session_state:
-            st.session_state.conversation_history = []
-        st.session_state.conversation_history.append({"role": "user", "content": search_query})
-
-        # If this is the first question, include the system message
-        if len(st.session_state.conversation_history) == 1:
-            messages=[
-                {"role": "system", "content": """You are a UK based professional analyst called OAT Docs Analyser assistant.
-                You always respond using UK spelling and grammar. You will be given extensive details on OAT Policies and 
-                OAT documents and will be able to cross-reference entire contents or analyse specific sections in order to answer any question given.
-                You must say if the information does not have enough detail, you must NOT make up facts or lie. 
-                At the end of any response, you must always source every single document source information you used in your response, 
-                each document source will be given in the format **Document Source: (insert content filename here)**. 
-                You must always answer the user's questions using all the information in documents given:""" + all_file_contents + "Today's date and time will given next, use that information to relate contextually relevant user questions " + current_date_and_time},
-                {"role": "user", "content": search_query}
-            ]
-
-        else:
-            # If this is a follow-up question
-            messages = [
-                {"role": "system", "content": """You are a UK based professional analyst called OAT Docs Analyser assistant.
-                You always respond using UK spelling and grammar. You will be given extensive details on OAT Policies and 
-                OAT documents and will be able to cross-reference entire contents or analyse specific sections in order to answer any question given.
-                You must say if the information does not have enough detail, you must NOT make up facts or lie. 
-                At the end of any response, you must always source every single document source information you used in your response, 
-                each document source will be given in the format **Document Source: (insert content filename here)**. 
-                You must always answer the user's questions using all the information in documents given:""" + all_file_contents + "Today's date and time will given next, use that information to relate contextually relevant user questions " + current_date_and_time},
-                {"role": "user", "content": search_query}
-                ] + st.session_state.conversation_history
-        
-        # Separate AI API call for handling user follow up questions, reduces massive user of tokens.
-        search_response = client.chat.completions.create(
-            model="gpt-4-1106-preview",
-            temperature=0.5,
-            stream = True,
-            messages=messages
-        )
-
-        # Placeholder for streaming responses
-        response_placeholder = st.empty()
-
-
-        # Initialize an empty string to hold the response
-        full_response = ""
+        current_date_and_time = get_current_date_and_time()
+        if current_date_and_time is None:
+            current_date_and_time = ""  # Ensure it's a string even if the function fails
 
         # Start time when the search begins
         start_time = time.time()
 
-        for chunk in search_response:
-            if chunk.choices[0].delta.content is not None:
-                # Append new content to the full response
-                full_response += chunk.choices[0].delta.content
-
-                # Update the placeholder with the full response so far
-                response_placeholder.write(full_response)
-
-                # Calculate and update tokens and run time
-                total_tokens += len(chunk.choices[0].delta.content.split())
-                run_time = time.time() - start_time
-                tokens_per_sec = total_tokens / run_time if run_time > 0 else 0
+        # Ensure conversation_history is stored in session state
+        if 'conversation_history' not in st.session_state:
+            st.session_state.conversation_history = []
 
 
+        try:
+            
+            # Add the user's question to the conversation history
+            if 'conversation_history' not in st.session_state:
+                st.session_state.conversation_history = []
+            st.session_state.conversation_history.append({"role": "user", "content": search_query})
+            #st.write("After adding user query:", st.session_state.conversation_history)
 
 
-        # Calculate the cost and tokens for the current response
-        input_cost_per_token = 0.01 / 1000  # Cost per token for input
-        output_cost_per_token = 0.03 / 1000  # Cost per token for output
-        current_cost = (total_tokens * (input_cost_per_token + output_cost_per_token))
-        current_total_tokens = total_tokens  # Store the total tokens for the current response
+            # Separate AI API call for handling user follow up questions, reduces massive user of tokens.
+            search_response = client.chat.completions.create(
+                model="gpt-4-1106-preview",
+                temperature=0.5,
+                stream = True,
+                messages= [
+                {"role": "system", "content": """You are a UK based professional analyst called OAT Docs Analyser assistant.
+                You always respond using UK spelling and grammar. You will be given extensive details on OAT Policies and 
+                OAT documents and will be able to cross-reference entire contents or analyse specific sections in order to answer any question given.
+                You must say if the information does not have enough detail, you must NOT make up facts or lie. 
+                At the end of any response, you must always source every single document source information you used in your response, 
+                each document source will be given in the format **Document Source: (insert content filename here)**. 
+                You must always answer the user's questions using all the information in documents given:""" + all_file_contents + """Today's date and time will given next,
+                use that information to relate contextually relevant user questions """ + current_date_and_time},
+                {"role": "user", "content": search_query}
+                ] + st.session_state.conversation_history
+            )
 
-        # Update the cumulative cost and total tokens in session state
-        st.session_state.cumulative_cost += current_cost
-        st.session_state.total_tokens += current_total_tokens
-
-
-
-
-        # Update full_response_str with the content of full_response
-        full_response_str = full_response
-
-        # Create a new row with the AI response
-        new_response = {"Response": full_response_str}
-
-                # Where you have the new response in full_response_str and the user's query in search_query
-        new_response_df = pd.DataFrame({
-            'Query': [search_query],  # Add the user's query
-            'AI Response': [full_response_str]
-        })
-
- 
-        # Concatenate the new DataFrame with the existing one in the session state
-        st.session_state.ai_responses_df = pd.concat([st.session_state.ai_responses_df, new_response_df], ignore_index=True)
-
-        # Sort the DataFrame by index in ascending order
-        st.session_state.ai_responses_df = st.session_state.ai_responses_df.sort_index(ascending=False)
-
-        # To display the DataFrame
-        st.table(st.session_state.ai_responses_df)
-
-        # Add the model's response to the conversation history
-        st.session_state.conversation_history.append({"role": "assistant", "content": full_response})
-
-        # Convert conversation_history to a string
-        conversation_history_str = str(st.session_state.conversation_history)
-        #st.write("conversation_history_str :    " + conversation_history_str)
+            # Placeholder for streaming responses
+            response_placeholder = st.empty()
 
 
-    except Exception as e:
-        st.error(f"An error occurred: {e}")
-# If this is a follow-up question, only include the conversation history
-#st.write("helpppppppppppppppppppppppppppppppppp3" + full_response_str)
+            # Initialize an empty string to hold the response
+            full_response = ""
+
+            # Start time when the search begins
+            start_time = time.time()
+
+            for chunk in search_response:
+                if chunk.choices[0].delta.content is not None:
+                    # Append new content to the full response
+                    full_response += chunk.choices[0].delta.content
+
+                    # Update the placeholder with the full response so far
+                    response_placeholder.write(full_response)
+
+                    # Calculate and update tokens and run time
+                    total_tokens += len(chunk.choices[0].delta.content.split())
+                    run_time = time.time() - start_time
+                    tokens_per_sec = total_tokens / run_time if run_time > 0 else 0
 
 
 
 
+            # Calculate the cost and tokens for the current response
+            input_cost_per_token = 0.01 / 1000  # Cost per token for input
+            output_cost_per_token = 0.03 / 1000  # Cost per token for output
+            current_cost = (total_tokens * (input_cost_per_token + output_cost_per_token))
+            current_total_tokens = total_tokens  # Store the total tokens for the current response
+
+            # Update the cumulative cost and total tokens in session state
+            st.session_state.cumulative_cost += current_cost
+            st.session_state.total_tokens += current_total_tokens
 
 
+
+
+            # Update full_response_str with the content of full_response
+            full_response_str = full_response
+
+            # Create a new row with the AI response
+            new_response = {"Response": full_response_str}
+
+                    # Where you have the new response in full_response_str and the user's query in search_query
+            new_response_df = pd.DataFrame({
+                'Query': [search_query],  # Add the user's query
+                'AI Response': [full_response_str]
+            })
+
+    
+            # Concatenate the new DataFrame with the existing one in the session state
+            st.session_state.ai_responses_df = pd.concat([st.session_state.ai_responses_df, new_response_df], ignore_index=True)
+
+            # Sort the DataFrame by index in ascending order
+            st.session_state.ai_responses_df = st.session_state.ai_responses_df.sort_index(ascending=False)
+
+            # To display the DataFrame
+            st.table(st.session_state.ai_responses_df)
+
+            # Add the model's response to the conversation history
+            st.session_state.conversation_history.append({"role": "assistant", "content": full_response})
+            #st.write("After adding AI response:", st.session_state.conversation_history)
+
+
+            # Convert conversation_history to a string
+            #conversation_history_str = str(st.session_state.conversation_history)
+            #st.write("conversation_history_str :    " + conversation_history_str)
+
+
+
+            # After the AI response has been fully sent, clear the user's query
+            if 'last_query' not in st.session_state or st.session_state.search_query != st.session_state.last_query:
+                st.session_state.last_query = st.session_state.search_query
+
+        except Exception as e:
+            st.error(f"An error occurred: {e}")
+    # If this is a follow-up question, only include the conversation history
+
+
+# Check if the form has been submitted
+if submitted:
+    # Process the query only when the form is submitted
+    process_query(search_query)
+    # Clear the input field by resetting the session state variable
+    #st.write("Conversation history after form submission:", st.session_state.conversation_history)
 
 
 
@@ -438,4 +448,4 @@ if __name__ == "__main__":
 # Outside of the button click event, check if 5 seconds have passed for each message
 for key in list(st.session_state.keys()):
     if key.startswith('success_') or key.startswith('warning_'):
-        show_temporary_message(None, None, key)  # This will check and clear the message if 5 seconds have passed
+        show_temporary_message(None, None, key)  
