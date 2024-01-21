@@ -26,6 +26,10 @@ if 'cumulative_cost' not in st.session_state:
 if 'total_tokens' not in st.session_state:
     st.session_state.total_tokens = 0
 
+# Initialize the total tokens in session state if it doesn't exist
+if 'run_time' not in st.session_state:
+    st.session_state.run_time = 0
+    
 # At the top of your Streamlit app, after imports
 if 'conversation_history' not in st.session_state:
     st.session_state.conversation_history = []
@@ -82,6 +86,43 @@ ai_responses = []
 # Initialize a DataFrame to store the full responses
 ai_responses_df = pd.DataFrame(columns=["Response"])
 
+
+
+
+
+
+
+# At the end of Streamlit app, custom css to display the footer stuff
+def render_footer(total_tokens, run_time, cumulative_cost):
+    # Check if any of the values are None and return an empty string if so
+    if total_tokens is None or run_time is None or cumulative_cost is None:
+        return ""
+    
+    # Construct the footer HTML
+    footer_html = f"""
+    <style>
+    .reportview-container .main footer {{
+        display: none;
+    }}
+    .footer {{
+        position: fixed;
+        left: 0;
+        bottom: 0;
+        width: 100%;
+        background-color: #111;
+        color: white;
+        text-align: center;
+        padding: 10px;
+        z-index: 9999;
+    }}
+    </style>
+    <footer class="footer">
+        <span>Total tokens: {total_tokens}</span>
+        <span style="margin-left: 30px;">Total run time: {run_time:.2f} seconds</span>
+        <span style="margin-left: 30px;">Predicted cost: ${cumulative_cost:.6f}</span>
+    </footer>
+    """
+    return footer_html
 
 def get_current_date_and_time():
     try:
@@ -153,8 +194,6 @@ def get_all_file_contents_from_repo(repo_name):
 # Initialize metrics
 start_time = None
 total_tokens = 0
-tokens_per_sec = 0
-footer_tokens_per_sec = 0  # Initialize tokens_per_sec here
 run_time = 0  # Initialize run_time here
 conversation_history_str = ""
 
@@ -258,7 +297,6 @@ footer_placeholder = st.empty()
 footer_placeholder.markdown("") 
 
 # Reserve space for the metrics at the bottom of the app
-footer_tokens_per_sec = st.empty()
 footer_tokens = st.empty()
 footer_run_time = st.empty()
 
@@ -277,7 +315,7 @@ def process_query(query):
 
         # Start time when the search begins
         start_time = time.time()
-
+        
         # Ensure conversation_history is stored in session state
         if 'conversation_history' not in st.session_state:
             st.session_state.conversation_history = []
@@ -319,6 +357,7 @@ def process_query(query):
 
             # Start time when the search begins
             start_time = time.time()
+            
 
             for chunk in search_response:
                 if chunk.choices[0].delta.content is not None:
@@ -327,15 +366,14 @@ def process_query(query):
 
                     # Update the placeholder with the full response so far
                     response_placeholder.write(full_response)
-
+                    
                     # Calculate and update tokens and run time
                     total_tokens += len(chunk.choices[0].delta.content.split())
                     run_time = time.time() - start_time
-                    tokens_per_sec = total_tokens / run_time if run_time > 0 else 0
 
 
 
-
+            
             # Calculate the cost and tokens for the current response
             input_cost_per_token = 0.01 / 1000  # Cost per token for input
             output_cost_per_token = 0.03 / 1000  # Cost per token for output
@@ -345,7 +383,15 @@ def process_query(query):
             # Update the cumulative cost and total tokens in session state
             st.session_state.cumulative_cost += current_cost
             st.session_state.total_tokens += current_total_tokens
+            st.session_state.run_time += run_time
 
+            # Update the footer
+            footer_html_content = render_footer(
+                st.session_state.total_tokens,
+                st.session_state.run_time,
+                st.session_state.cumulative_cost
+            )
+            footer_placeholder.markdown(footer_html_content, unsafe_allow_html=True)
 
 
 
@@ -407,45 +453,14 @@ if submitted:
 
 
 
-# At the end of Streamlit app, custom css to display the footer stuff
-def render_footer(tokens_per_sec, total_tokens, run_time, cumulative_cost):
-    # Check if any of the values are None and return an empty string if so
-    if tokens_per_sec is None or total_tokens is None or run_time is None or cumulative_cost is None:
-        return ""
-    
-    # Construct the footer HTML
-    footer_html = f"""
-    <style>
-    .reportview-container .main footer {{
-        display: none;
-    }}
-    .footer {{
-        position: fixed;
-        left: 0;
-        bottom: 0;
-        width: 100%;
-        background-color: #111;
-        color: white;
-        text-align: center;
-        padding: 10px;
-        z-index: 9999;
-    }}
-    </style>
-    <footer class="footer">
-        <span>Tokens / sec: {tokens_per_sec:.2f}</span>
-        <span style="margin-left: 30px;">Total tokens: {total_tokens}</span>
-        <span style="margin-left: 30px;">Run time: {run_time:.2f} seconds</span>
-        <span style="margin-left: 30px;">Predicted cost: ${cumulative_cost:.6f}</span>
-    </footer>
-    """
-    return footer_html
+
 
 # Ensure that the footer is rendered after all other components
 if __name__ == "__main__":
     # ... (rest of your Streamlit app logic) ...
 
     # At the end of your Streamlit app, update the footer in the placeholder
-    footer_html_content = render_footer(tokens_per_sec, st.session_state.total_tokens, run_time, st.session_state.cumulative_cost)
+    footer_html_content = render_footer(st.session_state.total_tokens, st.session_state.run_time, st.session_state.cumulative_cost)
     if footer_html_content:
         footer_placeholder = st.empty()
         footer_placeholder.markdown(footer_html_content, unsafe_allow_html=True)
