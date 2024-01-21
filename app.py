@@ -365,8 +365,6 @@ if password == st.secrets["general"]["password"]:
     if 'file_tokens' not in st.session_state:
         st.session_state.file_tokens = {}
 
-
-
     # Create a checkbox for each file in the sidebar
     MAX_TOKENS = 90000  # Maximum allowed tokens
 
