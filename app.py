@@ -375,12 +375,19 @@ if password == st.secrets["general"]["password"]:
             st.session_state.selected_files[file] = False
 
         # Check if selecting this file would exceed the maximum tokens
-        if st.session_state.selected_files[file] and file in st.session_state.file_tokens and sum(st.session_state.file_tokens.values()) > MAX_TOKENS:
-            st.sidebar.warning(f'Selecting "{file}" would exceed the maximum allowed tokens ({MAX_TOKENS}).')
-            st.session_state.selected_files[file] = False
+        # Calculate the potential new total of tokens if this file were selected
+        potential_new_total = sum(st.session_state.file_tokens.get(f, 0) for f, selected in st.session_state.selected_files.items() if selected)
+        if file in st.session_state.file_tokens:
+            potential_new_total += st.session_state.file_tokens[file]
+
+        # Check if selecting this file would exceed the maximum tokens
+        if potential_new_total > MAX_TOKENS:
+            # Only show the warning if the checkbox is being actively changed to selected
+            if col1.checkbox(f'{file}', value=False):  # Default to unchecked
+                st.sidebar.warning(f'Selecting "{file}" would exceed the maximum allowed tokens ({MAX_TOKENS}).')
         else:
             # Now you can safely create the checkbox with the value from the session state
-            st.session_state.selected_files[file] = col1.checkbox(f'{file}', value=st.session_state.selected_files[file])
+            st.session_state.selected_files[file] = col1.checkbox(f'{file}', value=st.session_state.selected_files.get(file, False))
 
         if file in st.session_state.file_tokens:
             col2.write(f'Tokens: {st.session_state.file_tokens[file]}')
