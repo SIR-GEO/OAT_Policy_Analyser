@@ -366,7 +366,7 @@ if password == st.secrets["general"]["password"]:
         st.session_state.file_tokens = {}
 
     # Create a checkbox for each file in the sidebar
-    MAX_TOKENS = 90000  # Maximum allowed tokens
+    MAX_TOKENS = 85000  # Maximum allowed tokens
 
     for file in all_files:
         # Skip the token_counts.json file
@@ -388,7 +388,7 @@ if password == st.secrets["general"]["password"]:
         if potential_new_total > MAX_TOKENS:
             # Only show the warning if the checkbox is being actively changed to selected
             if col1.checkbox(f'{file}', value=False):  # Default to unchecked
-                st.sidebar.warning(f'Selecting "{file}" would exceed the maximum allowed tokens ({MAX_TOKENS}).')
+                st.sidebar.warning(f'Warning selecting any more files would exceed the maximum allowed tokens ({MAX_TOKENS}).')
         else:
             # Now you can safely create the checkbox with the value from the session state
             st.session_state.selected_files[file] = col1.checkbox(f'{file}', value=st.session_state.selected_files.get(file, False))
