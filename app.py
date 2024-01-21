@@ -71,7 +71,7 @@ if password == st.secrets["general"]["password"]:
 
     # Add a slider for the temperature
 
-    temperature = st.slider('Creativity Slider | 0.0 = Highly Predictable | 1.0 = Super Creative', min_value=0.0, max_value=1.0, value=0.5, step=0.1, format='%.1f')
+    temperature = st.slider('Creativity Slider: 0.0 = Highly Predictable | 1.0 = Super Creative', min_value=0.0, max_value=1.0, value=0.5, step=0.1, format='%.1f')
 
 
     with st.form(key='query_form'):
@@ -542,12 +542,6 @@ if password == st.secrets["general"]["password"]:
 
                 # Add the model's response to the conversation history
                 st.session_state.conversation_history.append({"role": "assistant", "content": full_response})
-                #st.write("After adding AI response:", st.session_state.conversation_history)
-
-
-                # Convert conversation_history to a string
-                #conversation_history_str = str(st.session_state.conversation_history)
-                #st.write("conversation_history_str :    " + conversation_history_str)
 
 
 
@@ -557,7 +551,6 @@ if password == st.secrets["general"]["password"]:
 
             except Exception as e:
                 st.error(f"An error occurred: {e}")
-        # If this is a follow-up question, only include the conversation history
 
 
     # Check if the form has been submitted
