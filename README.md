@@ -35,7 +35,7 @@ So you have options for giving LLMs data to work with.
 
 ## Approaches for Integrating PDFs with Large Language Models (LLMs)
 
-### Retrieval-Augmented Generation (RAG) through an Index
+### RAG through an Index - **received unsatisfactory responses, missing too much context**
 - **Method**: Index the PDFs' contents and use RAG where the LLM fetches relevant information from this index before answering.
 - **Advantages**:
   - Answers are based on actual document contents.
@@ -44,7 +44,7 @@ So you have options for giving LLMs data to work with.
   - Requires setup for indexing and retrieval systems.
   - Answers limited to indexed information.
 
-### RAG by Uploading Documents into the System Prompt
+### RAG by Uploading Documents into the System Prompt - **Current setup**
 - **Method**: Input relevant PDF sections into the LLM's prompt with your question.
 - **Advantages**:
   - Direct and specific to the PDFs' content for each query.
@@ -52,7 +52,7 @@ So you have options for giving LLMs data to work with.
   - Limited by the LLM's token limit.
   - Impractical for large text volumes.
 
-### Fine-Tuning the AI with the Contents of the PDFs
+### Fine-Tuning the AI with the Contents of the PDFs - **Yet to experiment with**
 - **Method**: Train or fine-tune the LLM on the extracted text from the PDFs.
 - **Advantages**:
   - Tailors the model to your data, potentially improving accuracy and relevance.
