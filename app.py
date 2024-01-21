@@ -169,11 +169,27 @@ def upload_file_to_github(repo_name, file_path, file_content, commit_message):
 
         # Since the file does not exist, create it
         repo.create_file(file_path, commit_message, file_content)
-        st.sidebar.success(f'File "{file_path}" created successfully!')
+        st.sidebar.success(f'File "{file_path}" uploaded successfully!')
     except Exception as e:
         logging.error(f"An error occurred: {e}")
         st.sidebar.error(f'An error occurred while uploading the file "{file_path}".')
         raise e
+    
+
+def delete_file_from_github(repo_name, file_path, commit_message):
+    repo = g.get_user().get_repo(repo_name)
+    try:
+        contents = repo.get_contents(file_path)
+        repo.delete_file(contents.path, commit_message, contents.sha)
+        st.sidebar.success(f'File "{file_path}" deleted successfully!')
+    except Exception as e:
+        logging.error(f"An error occurred: {e}")
+        st.sidebar.error(f'An error occurred while deleting the file "{file_path}".')
+        raise e
+    
+
+
+
 
 def get_all_file_contents_from_repo(repo_name):
     try:
@@ -190,6 +206,7 @@ def get_all_file_contents_from_repo(repo_name):
     except Exception as e:
         logging.error(f"Failed to get file contents from repo: {e}")
         return ""  # Return an empty string in case of failure
+
 
 # Initialize metrics
 start_time = None
@@ -219,7 +236,6 @@ if st.sidebar.button('Process and Upload Files'):
                 if file_extension.lower() == '.txt':
                     # For .txt files, upload the content directly
                     upload_file_to_github(repo_name, text_file_name, file_content.decode('utf-8'), "Upload .txt file")
-                    st.sidebar.success(f'File "{text_file_name}" created successfully!')
                     st.session_state.message_time[text_file_name] = time.time()
 
                 else:
@@ -227,7 +243,6 @@ if st.sidebar.button('Process and Upload Files'):
                     text_content = process_document(uploaded_file.name, file_content)
                     if text_content:
                         upload_file_to_github(repo_name, text_file_name, text_content, "Upload processed text file")
-                        st.sidebar.success(f'File "{text_file_name}" created successfully!')
                     else:
                         st.sidebar.error(f'Failed to process the file: {uploaded_file.name}')
                 
@@ -236,13 +251,13 @@ if st.sidebar.button('Process and Upload Files'):
 
         # Clear the file uploader widget after processing
         uploaded_files = None
-# Outside of the button click event, check if 5 seconds have passed for each message
-for file_name, timestamp in list(st.session_state.message_time.items()):
-    if time.time() - timestamp > 5:
-        # 5 seconds have passed, clear the message
-        st.sidebar.empty()
-        # Remove the timestamp from the session state
-        del st.session_state.message_time[file_name]
+    # Outside of the button click event, check if 5 seconds have passed for each message
+    for file_name, timestamp in list(st.session_state.message_time.items()):
+        if time.time() - timestamp > 5:
+            # 5 seconds have passed, clear the message
+            st.sidebar.empty()
+            # Remove the timestamp from the session state
+            del st.session_state.message_time[file_name]
 
 
 def get_selected_file_contents_from_repo(repo_name, selected_files):
@@ -281,8 +296,15 @@ if 'selected_files' not in st.session_state:
 
 # Create a checkbox for each file in the sidebar
 for file in all_files:
-    st.session_state.selected_files[file] = st.sidebar.checkbox(f'Select {file}', value=st.session_state.selected_files[file])
-
+    col1, col2 = st.sidebar.columns([4,1])
+    st.session_state.selected_files[file] = col1.checkbox(f'Select {file}', value=st.session_state.selected_files[file])
+    if col2.button("🗑️", key=f'delete_{file}'):
+        delete_file_from_github(repo_name, file, "Delete file")
+        # Remove the file from the selected_files dictionary
+        del st.session_state.selected_files[file]
+        # Refresh the list of all files
+        all_files = get_all_files_from_repo(repo_name)
+        
 # Get the list of selected files
 selected_files = [file for file, selected in st.session_state.selected_files.items() if selected]
 
