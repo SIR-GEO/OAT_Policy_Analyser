@@ -8,6 +8,7 @@ import json
 import os
 from embedding_docs import process_document, process_documents, process_txt, process_docx, process_pdf
 from streamlit.components.v1 import html
+from tiktoken import Tokenizer
 from datetime import datetime
 from openai import OpenAI
 client = OpenAI()
@@ -24,7 +25,7 @@ if password == st.secrets["general"]["password"]:
 
     # Set up logging
     logging.basicConfig(level=logging.INFO)
-
+    tokenizer = Tokenizer()
     # At the top of your Streamlit app, after imports
     if 'ai_responses_df' not in st.session_state:
         st.session_state.ai_responses_df = pd.DataFrame(columns=["Query", "AI Response"])
@@ -188,7 +189,7 @@ if password == st.secrets["general"]["password"]:
             st.sidebar.success(f'File "{file_path}" uploaded successfully!')
 
             # Calculate the number of tokens in the file
-            token_count = len(file_content.split())
+            token_count = len(list(tokenizer.tokenize(file_content)))
 
             # Store the token count in the session state
             if 'file_tokens' not in st.session_state:
