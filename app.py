@@ -358,7 +358,10 @@ if 'file_tokens' not in st.session_state:
     st.session_state.file_tokens = {}
 
 
+
 # Create a checkbox for each file in the sidebar
+MAX_TOKENS = 110000  # Maximum allowed tokens
+
 for file in all_files:
     # Skip the token_counts.json file
     if file == 'token_counts.json':
@@ -368,16 +371,25 @@ for file in all_files:
     # Initialize the value for the file in the session state if it doesn't exist
     if file not in st.session_state.selected_files:
         st.session_state.selected_files[file] = False
-    # Now you can safely create the checkbox with the value from the session state
-    st.session_state.selected_files[file] = col1.checkbox(f'{file}', value=st.session_state.selected_files[file])
+
+    # Check if selecting this file would exceed the maximum tokens
+    if st.session_state.selected_files[file] and file in st.session_state.file_tokens and sum(st.session_state.file_tokens.values()) > MAX_TOKENS:
+        st.sidebar.warning(f'Selecting "{file}" would exceed the maximum allowed tokens ({MAX_TOKENS}).')
+        st.session_state.selected_files[file] = False
+    else:
+        # Now you can safely create the checkbox with the value from the session state
+        st.session_state.selected_files[file] = col1.checkbox(f'{file}', value=st.session_state.selected_files[file])
+
     if file in st.session_state.file_tokens:
         col2.write(f'Tokens: {st.session_state.file_tokens[file]}')
+
     if col3.button("🗑️", key=f'delete_{file}'):
         delete_file_from_github(repo_name, file, "Delete file")
         # Remove the file from the selected_files dictionary
         del st.session_state.selected_files[file]
         # Refresh the list of all files
         all_files = get_all_files_from_repo(repo_name)
+
 
 
         
