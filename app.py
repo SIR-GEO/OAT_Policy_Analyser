@@ -65,7 +65,7 @@ if password == st.secrets["general"]["password"]:
 
     # Add a slider for the temperature
 
-    temperature = st.slider('Percentage Creativity Slider | 0.0 = Highly Predictable | 1.0 = Super Creative', min_value=0.0, max_value=1.0, value=0.5, step=0.1, format='%.1f')
+    temperature = st.slider('Creativity Slider | 0.0 = Highly Predictable | 1.0 = Super Creative', min_value=0.0, max_value=1.0, value=0.5, step=0.1, format='%.1f')
 
 
     # At the top of your Streamlit app, after imports
