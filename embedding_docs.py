@@ -30,10 +30,8 @@ def process_docx(file_content):
             text = loader.load()
             return text
         except Exception as e:
-            print(f"An error occurred while processing DOCX: {e}")
-            print(f"Error type: {type(e)}")
-            print(f"Traceback: {traceback.format_exc()}")
-            return None
+            error_message = f"An error occurred while processing DOCX: {e}\nError type: {type(e)}\nTraceback: {traceback.format_exc()}"
+            return error_message
         finally:
             tmp_file.close()  # Ensure the file is closed before attempting to delete it
             os.remove(tmp_file.name)
