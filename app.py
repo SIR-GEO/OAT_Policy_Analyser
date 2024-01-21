@@ -4,6 +4,7 @@ import openai
 import time
 import logging
 import pandas as pd
+import json
 import os
 from embedding_docs import process_document
 from streamlit.components.v1 import html
@@ -41,6 +42,12 @@ if 'message_time' not in st.session_state:
 # At the top of your Streamlit app, after imports and before creating widgets
 if 'search_query' not in st.session_state:
     st.session_state.search_query = ""
+
+# At the top of your Streamlit app, after imports and before creating widgets
+if 'selected_files' not in st.session_state:
+    st.session_state.selected_files = {}
+
+
 
 # Create three columns with equal width to center the middle column content
 col1, col2, col3 = st.columns([1,1,1])
@@ -152,6 +159,7 @@ def show_temporary_message(message_type, message, key):
         del st.session_state[key]
 
 
+
 def upload_file_to_github(repo_name, file_path, file_content, commit_message):
     repo = g.get_user().get_repo(repo_name)
     try:
@@ -170,11 +178,62 @@ def upload_file_to_github(repo_name, file_path, file_content, commit_message):
         # Since the file does not exist, create it
         repo.create_file(file_path, commit_message, file_content)
         st.sidebar.success(f'File "{file_path}" uploaded successfully!')
+
+        # Calculate the number of tokens in the file
+        token_count = len(file_content.split())
+
+        # Store the token count in the session state
+        if 'file_tokens' not in st.session_state:
+            st.session_state.file_tokens = {}
+        st.session_state.file_tokens[file_path] = token_count
+
+        # Update the token counts file in the GitHub repository
+        update_token_counts(repo, file_path, token_count)
+
     except Exception as e:
         logging.error(f"An error occurred: {e}")
         st.sidebar.error(f'An error occurred while uploading the file "{file_path}".')
         raise e
+
+# Make sure to define the update_token_counts function as well
+def update_token_counts(repo, file_path, token_count):
+    token_counts_file = 'token_counts.json'
+    token_counts_content = None  # Initialize the variable outside of the try-except block
+
+    try:
+        # Try to get the existing token counts file
+        token_counts_content = repo.get_contents(token_counts_file)
+        token_counts = json.loads(token_counts_content.decoded_content)
+    except:
+        # If it doesn't exist, start with an empty dictionary
+        token_counts = {}
+
+    # Update the token count for the file
+    token_counts[file_path] = token_count
+
+    # Convert the dictionary back to a JSON string
+    token_counts_str = json.dumps(token_counts, indent=2)
+
+    # Update or create the token counts file in the repository
+    if token_counts_content:
+        repo.update_file(token_counts_file, "Update token counts", token_counts_str, token_counts_content.sha)
+    else:
+        repo.create_file(token_counts_file, "Create token counts", token_counts_str)
+
+    return token_counts
     
+def load_token_counts(repo_name):
+    repo = g.get_user().get_repo(repo_name)
+    token_counts_file = 'token_counts.json'
+    try:
+        token_counts_content = repo.get_contents(token_counts_file)
+        return json.loads(token_counts_content.decoded_content)
+    except:
+        # If the file doesn't exist, return an empty dictionary
+        return {}
+
+# At the start of your app, after initializing the GitHub client:
+st.session_state.file_tokens = load_token_counts(repo_name)
 
 def delete_file_from_github(repo_name, file_path, commit_message):
     repo = g.get_user().get_repo(repo_name)
@@ -294,16 +353,33 @@ all_files = get_all_files_from_repo(repo_name)
 if 'selected_files' not in st.session_state:
     st.session_state.selected_files = {file: False for file in all_files}
 
+# Initialize file_tokens in session state if it doesn't exist
+if 'file_tokens' not in st.session_state:
+    st.session_state.file_tokens = {}
+
+
 # Create a checkbox for each file in the sidebar
 for file in all_files:
-    col1, col2 = st.sidebar.columns([4,1])
-    st.session_state.selected_files[file] = col1.checkbox(f'Select {file}', value=st.session_state.selected_files[file])
-    if col2.button("🗑️", key=f'delete_{file}'):
+    # Skip the token_counts.json file
+    if file == 'token_counts.json':
+        continue
+
+    col1, col2, col3 = st.sidebar.columns([3,1,1])
+    # Initialize the value for the file in the session state if it doesn't exist
+    if file not in st.session_state.selected_files:
+        st.session_state.selected_files[file] = False
+    # Now you can safely create the checkbox with the value from the session state
+    st.session_state.selected_files[file] = col1.checkbox(f'{file}', value=st.session_state.selected_files[file])
+    if file in st.session_state.file_tokens:
+        col2.write(f'Tokens: {st.session_state.file_tokens[file]}')
+    if col3.button("🗑️", key=f'delete_{file}'):
         delete_file_from_github(repo_name, file, "Delete file")
         # Remove the file from the selected_files dictionary
         del st.session_state.selected_files[file]
         # Refresh the list of all files
         all_files = get_all_files_from_repo(repo_name)
+
+
         
 # Get the list of selected files
 selected_files = [file for file, selected in st.session_state.selected_files.items() if selected]
