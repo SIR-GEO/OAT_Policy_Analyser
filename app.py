@@ -12,10 +12,16 @@ from datetime import datetime
 from openai import OpenAI
 client = OpenAI()
 
-password = st.text_input("Enter the password", type="password")
+# Create a placeholder for the password input field
+password_placeholder = st.empty()
+
+# Display the password input field in the placeholder
+password = password_placeholder.text_input("Enter the password", type="password", key="password_input")
 
 if password == st.secrets["general"]["password"]:
-           
+    # Clear the password input field
+    password_placeholder.empty()
+
     # Set up logging
     logging.basicConfig(level=logging.INFO)
 
@@ -362,7 +368,7 @@ if password == st.secrets["general"]["password"]:
 
 
     # Create a checkbox for each file in the sidebar
-    MAX_TOKENS = 110000  # Maximum allowed tokens
+    MAX_TOKENS = 90000  # Maximum allowed tokens
 
     for file in all_files:
         # Skip the token_counts.json file
