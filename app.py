@@ -38,8 +38,13 @@ if 'message_time' not in st.session_state:
 if 'search_query' not in st.session_state:
     st.session_state.search_query = ""
 
+
 # Set up the Streamlit interface
-st.title('OAT Policy Analyser')
+st.markdown("<h1 style='text-align: center;'>OAT Policy Analyser</h1>", unsafe_allow_html=True)
+
+# Add a slider for the temperature
+
+temperature = st.slider('Percentage Creativity Slider | 0.0 = Highly Predictable | 1.0 = Super Creative', min_value=0.0, max_value=1.0, value=0.5, step=0.1, format='%.1f')
 
 
 # At the top of your Streamlit app, after imports
@@ -255,7 +260,6 @@ current_date_and_time = get_current_date_and_time()
 
 
 full_response_str = ""
-
 # Define the function to process the query
 def process_query(query):
     total_tokens = 0  # Define total_tokens at the start of the function
@@ -285,7 +289,7 @@ def process_query(query):
             # Separate AI API call for handling user follow up questions, reduces massive user of tokens.
             search_response = client.chat.completions.create(
                 model="gpt-4-1106-preview",
-                temperature=0.5,
+                temperature=temperature,
                 stream = True,
                 messages= [
                 {"role": "system", "content": """You are a UK based professional analyst called OAT Docs Analyser assistant.
