@@ -70,8 +70,9 @@ So you have options for giving LLMs data to work with.
 **For this system as of 21/01/24 it only explores the 'RAG by Uploading Documents into the System Prompt'. Due to our testing finding limitations with document indexing - the system still seemed to miss out key data from the docuements and not provide enough data to be more analytical in terms of data manipulation. Need to explore fine-tuning or training an AI model next**
 
 
+
 ## Features
-- **Policy Analysis**: Utilises language models to analyse policy documents, offering summaries and key insights.
+- **Policy Analysis**: Utilises language models to analyse entire documents (not indexed) policy documents, offering summaries and key insights.
 - **Document Embedding**: Converts documents into a numerical form that can be processed by machine learning models.
 - **User-Friendly Interface**: Built with Streamlit, the tool provides an intuitive web interface for easy interaction.
 - **GitHub Integration**: Integrates with GitHub, allowing users to fetch policy documents directly from repositories.
