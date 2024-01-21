@@ -599,4 +599,5 @@ if password == st.secrets["general"]["password"]:
             show_temporary_message(None, None, key)  
         
 else:
-    st.write("Access denied.")
+    if password != '' and password != st.secrets["general"]["password"]:
+        st.write("Access denied.")
