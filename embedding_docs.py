@@ -1,6 +1,6 @@
-# embedding_docs.py
 import os
 import tempfile
+import traceback
 from langchain_community.document_loaders import UnstructuredPDFLoader
 from langchain_community.document_loaders.word_document import Docx2txtLoader
 
@@ -31,6 +31,8 @@ def process_docx(file_content):
             return text
         except Exception as e:
             print(f"An error occurred while processing DOCX: {e}")
+            print(f"Error type: {type(e)}")
+            print(f"Traceback: {traceback.format_exc()}")
             return None
         finally:
             tmp_file.close()  # Ensure the file is closed before attempting to delete it
