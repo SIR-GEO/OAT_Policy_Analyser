@@ -76,7 +76,7 @@ if password == st.secrets["general"]["password"]:
 
 
     model_choice = st.radio(
-        "Choose a AI model:",
+        "Select AI model:",
         ('Claude 2.1', 'GPT-4-Turbo')
     )
 
