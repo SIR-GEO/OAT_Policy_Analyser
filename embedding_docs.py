@@ -4,6 +4,9 @@ import traceback
 from langchain_community.document_loaders import UnstructuredPDFLoader
 from langchain_community.document_loaders.word_document import Docx2txtLoader
 
+
+
+
 def process_pdf(file_content):
     # Write the PDF content to a temporary file and then process it
     with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf', mode='wb') as tmp_file:
@@ -15,10 +18,15 @@ def process_pdf(file_content):
             return text
         except Exception as e:
             print(f"An error occurred while processing PDF: {e}")
+            print(f"Error type: {type(e)}")
+            print(f"Traceback: {traceback.format_exc()}")
             return None
         finally:
             tmp_file.close()  # Ensure the file is closed before attempting to delete it
             os.remove(tmp_file.name)
+
+
+
 
 def process_docx(file_content):
     # Write the DOCX content to a temporary file and then process it
