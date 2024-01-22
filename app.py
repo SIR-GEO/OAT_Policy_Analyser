@@ -11,7 +11,9 @@ from streamlit.components.v1 import html
 import tiktoken
 from datetime import datetime
 from openai import OpenAI
-client = OpenAI()
+from anthropic import Anthropic
+
+
 
 # Create a placeholder for the password input field
 password_placeholder = st.empty()
@@ -72,8 +74,13 @@ if password == st.secrets["general"]["password"]:
     # Set up the Streamlit interface
     st.markdown("<h1 style='text-align: center;'>OAT Policy Analyser</h1>", unsafe_allow_html=True)
 
-    # Add a slider for the temperature
 
+    model_choice = st.radio(
+        "Choose a AI model:",
+        ('Claude 2.1', 'GPT-4-Turbo')
+    )
+
+    # Add a slider for the temperature
     temperature = st.slider('Creativity Slider: 0.0 = Highly Predictable | 1.0 = Super Creative', min_value=0.0, max_value=1.0, value=0.5, step=0.1, format='%.1f')
 
 
@@ -372,7 +379,7 @@ if password == st.secrets["general"]["password"]:
         st.session_state.file_tokens = {}
 
     # Create a checkbox for each file in the sidebar
-    MAX_TOKENS = 90000  # Maximum allowed tokens
+    MAX_TOKENS = 100000  # Maximum allowed tokens
 
     for file in all_files:
         # Skip the token_counts.json file
@@ -419,20 +426,19 @@ if password == st.secrets["general"]["password"]:
     all_file_contents = get_selected_file_contents_from_repo(repo_name, selected_files)
 
 
-
-
     # Create a placeholder for the footer
     footer_placeholder = st.empty()
     footer_placeholder.markdown("") 
-
     # Reserve space for the metrics at the bottom of the app
     footer_tokens = st.empty()
     footer_run_time = st.empty()
-
+    
     current_date_and_time = get_current_date_and_time()
-
-
     full_response_str = ""
+
+
+
+
     # Define the function to process the query
     def process_query(query):
         # Calculate the token count of the selected files
@@ -450,71 +456,125 @@ if password == st.secrets["general"]["password"]:
             # Start time when the search begins
             start_time = time.time()
             
-            # Ensure conversation_history is stored in session state
-            if 'conversation_history' not in st.session_state:
-                st.session_state.conversation_history = []
-
 
             try:
-                
-                # Add the user's question to the conversation history
-                if 'conversation_history' not in st.session_state:
-                    st.session_state.conversation_history = []
-                st.session_state.conversation_history.append({"role": "user", "content": search_query})
-                #st.write("After adding user query:", st.session_state.conversation_history)
-
-
-                # Separate AI API call for handling user follow up questions, reduces massive user of tokens.
-                search_response = client.chat.completions.create(
-                    model="gpt-4-1106-preview",
-                    temperature=temperature,
-                    stream = True,
-                    messages= [
-                    {"role": "system", "content": """You are a UK based professional analyst called OAT Docs Analyser assistant.
-                    You always respond using UK spelling and grammar. You will be given extensive details on OAT Policies and 
-                    OAT documents and will be able to cross-reference entire contents or analyse specific sections in order to answer any question given.
-                    You must say if the information does not have enough detail, you must NOT make up facts or lie. 
-                    At the end of any response, you must always source every single document source information you used in your response, 
-                    each document source will be given in the format **Document Source: (insert content filename here)**. 
-                    You must always answer the user's questions using all the information in documents given:""" + all_file_contents + """Today's date and time will given next,
-                    use that information to relate contextually relevant user questions """ + current_date_and_time},
-                    {"role": "user", "content": search_query}
-                    ]
-                )
-                # add this line just after the ]  -   + st.session_state.conversation_history  - to put the follow up questions back in, so the model knows what has just been said and asked.
-
-
-                # Placeholder for streaming responses
-                response_placeholder = st.empty()
-
-
-                # Initialize an empty string to hold the response
-                full_response = ""
-
-                # Start time when the search begins
-                start_time = time.time()
-                
-
-                for chunk in search_response:
-                    if chunk.choices[0].delta.content is not None:
-                        # Append new content to the full response
-                        full_response += chunk.choices[0].delta.content
-
-                        # Update the placeholder with the full response so far
-                        response_placeholder.write(full_response)
+                if model_choice == 'GPT-4-Turbo':  
+                    # Initialize client
+                    client = OpenAI()               
                         
-                        # Calculate and update tokens and run time
-                        total_tokens += len(chunk.choices[0].delta.content.split())
-                        run_time = time.time() - start_time
+                    # Add the user's question to the conversation history
+                    if 'conversation_history' not in st.session_state:
+                        st.session_state.conversation_history = []
+                    st.session_state.conversation_history.append({"role": "user", "content": search_query})
+                    #st.write("After adding user query:", st.session_state.conversation_history)
 
 
+                    # Separate AI API call for handling user follow up questions, reduces massive user of tokens.
+                    search_response = client.chat.completions.create(
+                        model="gpt-4-1106-preview",
+                        temperature=temperature,
+                        stream = True,
+                        messages= [
+                        {"role": "system", "content": """You are a UK based professional analyst called OAT Docs Analyser assistant.
+                        You always respond using UK spelling and grammar. You will be given extensive details on OAT Policies and 
+                        OAT documents and will be able to cross-reference entire contents or analyse specific sections in order to answer any question given.
+                        You must say if the information does not have enough detail, you must NOT make up facts or lie. 
+                        At the end of any response, you must always source every single document source information you used in your response, 
+                        each document source will be given in the format **Document Source: (insert content filename here)**. 
+                        You must always answer the user's questions using all the information in documents given:""" + all_file_contents + """Today's date and time will given next,
+                        use this information to help answer user questions """ + current_date_and_time},
+                        {"role": "user", "content": search_query}
+                        ]
+                    )
+                    # add this line just after the ]  -   + st.session_state.conversation_history  - to put the follow up questions back in, so the model knows what has just been said and asked.
 
-                
-                # Calculate the cost and tokens for the current response
-                input_cost_per_token = 0.01 / 1000  # Cost per token for input
-                output_cost_per_token = 0.03 / 1000  # Cost per token for output
-                current_cost = (total_tokens * (input_cost_per_token + output_cost_per_token))
-                current_total_tokens = total_tokens  # Store the total tokens for the current response
+
+                    # Placeholder for streaming responses
+                    response_placeholder = st.empty()
+
+
+                    # Initialize an empty string to hold the response
+                    full_response = ""
+
+                    # Start time when the search begins
+                    start_time = time.time()
+                    
+
+                    for chunk in search_response:
+                        if chunk.choices[0].delta.content is not None:
+                            # Append new content to the full response
+                            full_response += chunk.choices[0].delta.content
+
+                            # Update the placeholder with the full response so far
+                            response_placeholder.write(full_response)
+                            
+                            # Calculate and update tokens and run time
+                            total_tokens += len(chunk.choices[0].delta.content.split())
+                            run_time = time.time() - start_time
+
+                    # Calculate the cost and tokens for the current response
+                    input_cost_per_token = 0.01 / 1000  # Cost per token for input
+                    output_cost_per_token = 0.03 / 1000  # Cost per token for output
+                    current_cost = (total_tokens * (input_cost_per_token + output_cost_per_token))
+                    current_total_tokens = total_tokens  # Store the total tokens for the current response
+
+
+                else:
+                    # Interact with Claude
+                    client = Anthropic(api_key=st.secrets["ANTHROPIC_API_KEY"])
+
+                    # Add the user's question to the conversation history
+                    if 'conversation_history' not in st.session_state:
+                        st.session_state.conversation_history = []
+
+                    st.session_state.conversation_history.append({"role": "user", "content": search_query})
+                    #st.write("After adding user query:", st.session_state.conversation_history)
+                    
+                    with client.beta.messages.stream(
+                        max_tokens=4096,
+                        model="claude-2.1",
+                        temperature=temperature,
+                        messages= [{"role": "user", "content": search_query}],
+                        system="""You are a UK based professional analyst called OAT Docs Analyser assistant.
+                                You always respond using UK spelling and grammar. You will be given extensive details on OAT Policies and 
+                                OAT documents and will be able to cross-reference entire contents or analyse specific sections in order to answer any question given.
+                                You must say if the information does not have enough detail, you must NOT make up facts or lie. 
+                                At the end of any response, you must always source every single document source information you used in your response, 
+                                each document source will be given in the format **Document Source: (insert content filename here)**. 
+                                You must always answer the user's questions using all the information in documents given:""" + all_file_contents + """Today's date and time will given next,
+                                use this information to help answer user questions """ + current_date_and_time
+                    ) as stream:
+
+                        # Placeholder for streaming responses
+                        response_placeholder = st.empty()
+
+                        # Initialize an empty string to hold the response
+                        full_response = ""
+
+                        # Start time when the search begins
+                        start_time = time.time()
+
+                        # Iterate over the stream
+                        for text in stream.text_stream:
+                   
+                            # Append new content to the full response
+                            full_response += text
+
+                            # Update the placeholder with the full response so far
+                            response_placeholder.write(full_response)
+                            
+                            # Calculate and update tokens and run time
+                            total_tokens += len(text.split())
+                            run_time = time.time() - start_time
+
+
+                                   
+            
+                    # Calculate the cost and tokens for the current response
+                    input_cost_per_token = 0.008 / 1000  # Cost per token for input
+                    output_cost_per_token = 0.024 / 1000  # Cost per token for output
+                    current_cost = (total_tokens * (input_cost_per_token + output_cost_per_token))
+                    current_total_tokens = total_tokens  # Store the total tokens for the current response
 
                 # Update the cumulative cost and total tokens in session state
                 st.session_state.cumulative_cost += current_cost
@@ -571,7 +631,6 @@ if password == st.secrets["general"]["password"]:
         # Process the query only when the form is submitted
         process_query(search_query)
         # Clear the input field by resetting the session state variable
-        #st.write("Conversation history after form submission:", st.session_state.conversation_history)
 
 
 
