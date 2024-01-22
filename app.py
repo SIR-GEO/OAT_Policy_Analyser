@@ -80,7 +80,7 @@ if password == st.secrets["general"]["password"]:
 
     model_choice = st.radio(
         "Select AI model:",
-        ('Claude 2.1', 'GPT-4-Turbo', 'Mistral-Medium (Max 30k Tokens)')
+        ('Claude 2.1', 'GPT-4-Turbo', 'Mistral-Medium (Max 25k Tokens)')
     )
 
     # Add a slider for the temperature
@@ -577,7 +577,7 @@ if password == st.secrets["general"]["password"]:
                     current_total_tokens = total_tokens  # Store the total tokens for the current response
 
 
-                elif model_choice == 'Mistral-Medium (Max 30k Tokens)':
+                elif model_choice == 'Mistral-Medium (Max 25k Tokens)':
                     # Initialize client
                     
                     client = MistralClient(api_key=st.secrets["MISTRAL_API_KEY"])
