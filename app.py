@@ -80,11 +80,11 @@ if password == st.secrets["general"]["password"]:
 
     model_choice = st.radio(
         "Select AI model:",
-        ('Claude 2.1', 'GPT-4-Turbo', 'Mistral')
+        ('Claude 2.1', 'GPT-4-Turbo', 'Mistral-Medium')
     )
 
     # Add a slider for the temperature
-    temperature = st.slider('Creativity Slider: 0.0 = Highly Predictable | 1.0 = Super Creative', min_value=0.0, max_value=1.0, value=0.5, step=0.1, format='%.1f')
+    temperature_slider = st.slider('Creativity Slider: 0.0 = Highly Predictable | 1.0 = Super Creative', min_value=0.0, max_value=1.0, value=0.5, step=0.1, format='%.1f')
 
 
     with st.form(key='query_form'):
@@ -475,7 +475,7 @@ if password == st.secrets["general"]["password"]:
                     # Separate AI API call for handling user follow up questions, reduces massive user of tokens.
                     search_response = client.chat.completions.create(
                         model="gpt-4-1106-preview",
-                        temperature=temperature,
+                        temperature=temperature_slider,
                         stream = True,
                         messages= [
                         {"role": "system", "content": """You are a UK based professional analyst called OAT Docs Analyser assistant.
@@ -536,7 +536,7 @@ if password == st.secrets["general"]["password"]:
                     with client.beta.messages.stream(
                         max_tokens=4096,
                         model="claude-2.1",
-                        temperature=temperature,
+                        temperature=temperature_slider,
                         messages= [{"role": "user", "content": search_query}],
                         system="""You are a UK based professional analyst called OAT Docs Analyser assistant.
                                 You always respond using UK spelling and grammar. You will be given extensive details on OAT Policies and 
@@ -577,11 +577,12 @@ if password == st.secrets["general"]["password"]:
                     current_total_tokens = total_tokens  # Store the total tokens for the current response
 
 
-                elif model_choice == 'Mistral':
+                elif model_choice == 'Mistral-Medium':
                     # Initialize client
                     
                     client = MistralClient(api_key=st.secrets["MISTRAL_API_KEY"])
                     model = "mistral-medium"
+                    temperature=temperature_slider
                     messages = [
                         ChatMessage(role="system", content="""You are a UK based professional analyst called OAT Docs Analyser assistant.
                         You always respond using UK spelling and grammar. You will be given extensive details on OAT Policies and 
@@ -593,7 +594,6 @@ if password == st.secrets["general"]["password"]:
                         use this information to help answer user questions """ + current_date_and_time),
                         ChatMessage(role="user", content=search_query)
                     ]
-
                     # Placeholder for streaming responses
                     response_placeholder = st.empty()
 
@@ -604,7 +604,7 @@ if password == st.secrets["general"]["password"]:
                     start_time = time.time()
 
                     # Iterate over the stream
-                    for chunk in client.chat_stream(model=model, messages=messages):
+                    for chunk in client.chat_stream(model=model, messages=messages, temperature=temperature):
                         # Append new content to the full response
                         full_response += chunk.choices[0].delta.content
 
