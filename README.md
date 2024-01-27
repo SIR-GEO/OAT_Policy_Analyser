@@ -35,7 +35,7 @@ So you have options for giving LLMs data to work with.
 
 ## Approaches for Integrating PDFs with Large Language Models (LLMs)
 
-### RAG through an Index - (**Received unsatisfactory responses, missing too much context**)
+### RAG through an Index - (**Currently Testing https://github.com/SIR-GEO/OAT_Policy_Analyser_2**)
 - **Method**: Index the PDFs' contents and use RAG where the LLM fetches relevant information from this index before answering.
 - **Advantages**:
   - Answers are based on actual document contents.
